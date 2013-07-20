@@ -3,7 +3,7 @@
 Sim.KeyFrameAnimator = function() 
 {
     Sim.Object.call();
-	    		
+	
 	this.interps = [];
 	this.running = false;
 }

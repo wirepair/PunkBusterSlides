@@ -23,7 +23,7 @@ Sim.Publisher.prototype.subscribe = function(message, subscriber, callback) {
         subscribers = [];
         this.messageTypes[message] = subscribers;
     }
-    console.log("subscribe() subscribers: " + subscriber + " for: " + message);
+    console.log("subscribe() subscribers: " + subscriber.name + " for: " + message);
     subscribers.push({ subscriber : subscriber, callback : callback });
 
 }
@@ -32,12 +32,13 @@ Sim.Publisher.prototype.unsubscribe =  function(message, subscriber, callback) {
     if (subscriber)
     {
         var subscribers = this.messageTypes[message];
-
+        
         if (subscribers)
         {
             var i = this.findSubscriber(subscribers, subscriber, callback);
             if (i != -1)
             {
+            	console.log("unsubscribe " + subscribers[i].subscriber.name + " message: " + message);
                 this.messageTypes[message].splice(i, 1);
             }
         }
@@ -50,11 +51,11 @@ Sim.Publisher.prototype.unsubscribe =  function(message, subscriber, callback) {
 
 Sim.Publisher.prototype.publish = function(message) {
     var subscribers = this.messageTypes[message];
-	console.log("publish() subscribers: " + subscribers + " for: " + message);
     if (subscribers)
     {
         for (var i = 0; i < subscribers.length; i++)
         {
+        	console.log("publish() subscribers: " + subscribers[i].subscriber.name + " for: " + message);
             var args = [];
             for (var j = 0; j < arguments.length - 1; j++)
             {
@@ -68,8 +69,9 @@ Sim.Publisher.prototype.publish = function(message) {
 Sim.Publisher.prototype.findSubscriber = function (subscribers, subscriber) {
     for (var i = 0; i < subscribers.length; i++)
     {
-        if (subscribers[i] == subscriber)
+        if (subscribers[i].subscriber == subscriber)
         {
+        	console.log("Found: " + subscribers[i].subscriber.name);
             return i;
         }
     }
