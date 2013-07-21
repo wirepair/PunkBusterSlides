@@ -27,7 +27,7 @@ SlidesApp.prototype.registerSlides = function(slides)
     this.slides.setList(slides);
     do {
         var slide = this.slides.next()
-        slide.init();
+        slide.init(this);
     } while ( this.slides.peek()  != null)
     this.slides.reset();
     this.nextSlide();
@@ -35,7 +35,7 @@ SlidesApp.prototype.registerSlides = function(slides)
 
 SlidesApp.prototype.slideComplete = function()
 {
-    console.log("SlidesApp.slideComplete SLIDE COMPLETETETLTELTELTEL");
+    //console.log("SlidesApp.slideComplete SLIDE COMPLETETETLTELTELTEL");
     this.nextSlide();
 }
 SlidesApp.prototype.nextSlide = function()
@@ -45,19 +45,20 @@ SlidesApp.prototype.nextSlide = function()
     if ( this.slides.isEnd() )
     {
         // We're done.
-        console.log("We are at the end of the slides!");
+        //console.log("We are at the end of the slides!");
         return;
     } 
-    console.log("next slide");
+
     if (this.slides.current() != null)
     {
         this.slides.current().unsubscribeListeners();
+        this.slides.current().object3D.visible = false;
     }
     slide = this.slides.next();
+    slide.object3D.visible = true;
     this.addObject(slide);
     slide.subscribe("slide_next", this, this.slideComplete);
     slide.subscribe("slide_previous", this, this.previousSlide);
-
     slide.nextAnimation();
 }
 
@@ -66,17 +67,19 @@ SlidesApp.prototype.previousSlide = function()
     console.log("SlidesApp.previousSlide");
     if ( this.slides.isBeginning() )
     {
-        console.log("Already at beginning of slides!");
+        //console.log("Already at beginning of slides!");
         return;
     }
     var slide = this.slides.current();
+    slide.object3D.visible = false;
     slide.unsubscribeListeners();
     slide.animations.reset(); // reset our animations since we are done with this slide for now.
     this.removeObject(slide);
 
     // go to the previous slide.
-    console.log("GOING TO PREVIOUS SLIDE!");
+    //console.log("GOING TO PREVIOUS SLIDE!");
     slide = this.slides.prev();
+    slide.object3D.visible = true;
     this.addObject(slide);
     // re-subscribe our listeners.
     slide.subscribeListeners();
@@ -96,7 +99,7 @@ SlidesApp.prototype.handleKeyDown = function(keyCode, charCode)
 
 SlidesApp.prototype.onAnimationComplete = function()
 {
-    console.log("SlidesApp.onAnimationComplete complete.");
+    //console.log("SlidesApp.onAnimationComplete complete.");
 }
 
 SlidesApp.prototype.update = function()
@@ -148,6 +151,30 @@ ObjectEffects.prototype.rotateOut = function(object3D)
             { keys:outRotationKeys, values:outRotationValues, target:object3D.rotation } 
             ];
 }
+ObjectEffects.prototype.moveFloorIn = function(object3D)
+{
+    var inPositionKeys = [0, .25, .75, 1];
+    var inPositionValues = [ { x : 0, y: 0, z : -100}, 
+                            { x: 0, y: 0, z: -75},
+                            { x: 0, y: 0, z: -50},
+                            { x : 0, y: -1, z : 0}
+                            ];
+    return [ 
+            { keys:inPositionKeys, values:inPositionValues, target:object3D.position }
+            ];
+}
+ObjectEffects.prototype.moveFloorOut = function(object3D)
+{
+    var outPositionKeys = [0, .25, .75, 1];
+    var outPositionValues = [ { x : 0, y: -1, z : 0}, 
+                            { x: 0, y: 0, z: -25},
+                            { x: 0, y: 0, z: -75},
+                            { x : 0, y: 0, z : -100}
+                            ];
+    return [ 
+            { keys:outPositionKeys, values:outPositionValues, target:object3D.position }
+            ];
+}
 
 
 /* BASIC SLIDE OBJECT */
@@ -168,7 +195,7 @@ SimpleSlide.prototype.init = function(App)
 
 SimpleSlide.prototype.animate = function(animation, on)
 {
-    console.log("animate: " + on);
+    //console.log("animate: " + on);
     ( on ) ? animation.start() : animation.stop(); 
 }
 SimpleSlide.prototype.onAnimationComplete = function()
@@ -178,21 +205,18 @@ SimpleSlide.prototype.onAnimationComplete = function()
     // really irritating, "complete" must be set in animations context, due to the animation calling publish("complete")
     // but 'this' has to be set to our Slide.
     this.unsubscribe.call(animation, "complete", this);
-    console.log("this.animations.isBeginning = " + this.animations.isBeginning());
-    console.log("this.animations.isEnd = " + this.animations.isEnd());
-    console.log("this.reloaded = " + this.reloaded);
-    console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
+    //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
     
     if (this.animations.isEnd() && this.reloaded == false)
     {
-        console.log("all animations complete:" + this.name);
-        console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
+        //console.log("all animations complete:" + this.name);
+        //console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
         this.publish("slide_next");
     }
 
     if (this.reloaded == true)
     {
-        console.log("Resetting reloaded flag.");
+        //console.log("Resetting reloaded flag.");
         this.reloaded = false;
     }
     
@@ -202,22 +226,22 @@ SimpleSlide.prototype.onAnimationComplete = function()
  */
 SimpleSlide.prototype.nextAnimation = function()
 {
-    console.log("nextAnimation index: " + this.animations.getIndex());
+    //console.log("nextAnimation index: " + this.animations.getIndex());
     var animation = this.animations.next();
-    //this.subscribe("complete", this, this.onAnimationComplete);
+
     this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
     this.runAnimation(animation);
 }
 /* 
- * Decrement our animation counter and call runAnimation.
+ * Run the previous animation.
  */
 SimpleSlide.prototype.previousAnimation = function()
 {
     var animation = this.animations.prev();
-    console.log("PREVIOUS ANIMATION CALLED!");
+    //console.log("PREVIOUS ANIMATION CALLED!");
 
     this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
-    console.log("previousAnimation index: " + this.animations.getIndex());
+    //console.log("previousAnimation index: " + this.animations.getIndex());
     this.runAnimation(animation);
     
 }
@@ -239,16 +263,41 @@ SimpleSlide.prototype.runAnimation = function(animation)
 // Allow each slide to handle key events.
 SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
 {
-    console.log("=====================================================================> " + this.name + "KEY DOWN");
     switch(keyCode)
     {
         case Sim.KeyCodes.KEY_LEFT:
-            (this.animations.isBeginning()) ? this.publish("slide_previous") : this.previousAnimation();
+            if (this.animations.isBeginning())
+            {
+                if (this.animating == false)
+                {
+                    this.publish("slide_previous");
+                }
+            } 
+            else
+            {
+                if (this.animating == true)
+                {
+                    this.animate(this.animations.current(), this.animating);
+                }
+                this.previousAnimation();
+            }
             break;
         case Sim.KeyCodes.KEY_RIGHT:
-            console.log("hand isEnd?: " + this.animations.isEnd());
-            (this.animations.isEnd()) ? this.publish("slide_next") : this.nextAnimation();
-            //this.nextAnimation();
+            if (this.animations.isEnd())
+            {
+                if (this.animating == false)
+                {
+                    this.publish("slide_next");
+                }
+            }
+            else
+            {
+                if (this.animating == true)
+                {
+                    this.animate(this.animations.current(), this.animating);
+                }
+                this.nextAnimation();
+            }
             break;
     }
 }
@@ -267,13 +316,13 @@ SimpleSlide.prototype.unsubscribeListeners = function()
 
 SimpleSlide.prototype.previousSlide = function()
 {
-    console.log("SimpleSlide.previousSlide publish");
+    //console.log("SimpleSlide.previousSlide publish");
     this.object3D.visibility = false;
 }
 
 SimpleSlide.prototype.nextSlide = function()
 {
-    console.log("SimpleSlide.nextSlide publish");
+    //console.log("SimpleSlide.nextSlide publish");
     //this.publish("slide_next");
 }
 
