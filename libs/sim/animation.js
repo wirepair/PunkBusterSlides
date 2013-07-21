@@ -210,20 +210,3 @@ Sim.Interpolator.prototype.tween = function(from, to, fract)
 	
 	return value;
 }
-
-Sim.Interpolator.prototype.reverseTween = function(from, to, fract)
-{
-	var value = {};
-	for ( var property in to ) {
-		
-		if ( to[ property ] === null ) {		
-		continue;		
-		}
-
-		var range = from[property] - to[property];
-		var delta = range * fract;
-		value[ property ] = to[ property ] + delta;
-	}
-	
-	return value;
-}

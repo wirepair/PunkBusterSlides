@@ -51,8 +51,10 @@ SlidesApp.prototype.nextSlide = function()
 
     if (this.slides.current() != null)
     {
-        this.slides.current().unsubscribeListeners();
-        this.slides.current().object3D.visible = false;
+        var current = this.slides.current();
+        current.unsubscribeListeners();
+        current.object3D.visible = false;
+        this.removeObject(current);
     }
     slide = this.slides.next();
     slide.object3D.visible = true;
@@ -176,10 +178,64 @@ ObjectEffects.prototype.moveFloorOut = function(object3D)
             ];
 }
 
+ObjectEffects.prototype.fadeIn = function( object3D )
+{
+    return [{ 
+                keys:[0, .5, 1], 
+                values:[
+                    { opacity : 0},
+                    { opacity : 0.5},
+                    { opacity : 1},
+                ],
+                target: object3D
+                }];
+}
+
+ObjectEffects.prototype.fadeOut = function( object3D )
+{
+    return [{ 
+                keys:[0, .5, 1], 
+                values:[
+                    { opacity : 1},
+                    { opacity : 0.5},
+                    { opacity : 0},
+                ],
+                target: object3D
+                }];
+}
+
+ObjectEffects.prototype.transform = function( targets, duration, objects, render_callback )
+{
+    TWEEN.removeAll();
+
+    for ( var i = 0; i < objects.length; i ++ ) 
+    {
+
+        var object = objects[ i ];
+        var target = targets[ i ];
+
+        new TWEEN.Tween( object.position )
+            .to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start();
+
+        new TWEEN.Tween( object.rotation )
+            .to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start();
+
+    }
+
+    new TWEEN.Tween( this )
+        .to( {}, duration * 2 )
+        .onUpdate( render_callback )
+        .start();
+}
 
 /* BASIC SLIDE OBJECT */
 SimpleSlide = function()
 {
+
     Sim.Object.call(this);
 
 }
