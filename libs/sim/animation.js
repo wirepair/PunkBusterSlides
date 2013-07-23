@@ -186,7 +186,17 @@ Sim.Interpolator.prototype.interp = function(fract)
 	
 	if (this.target)
 	{
-		this.copyValue(value, this.target);
+		if (this.target instanceof Array)
+		{
+			for (var i = 0; i < this.target.length; i++)
+			{
+				this.copyValue(value, this.target[i]);	
+			}
+		}
+		else
+		{
+			this.copyValue(value, this.target);
+		}
 	}
 	else
 	{

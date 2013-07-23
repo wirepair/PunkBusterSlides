@@ -14,6 +14,7 @@ SlidesApp.prototype.init = function(param)
 	// Call superclass init code to set up scene, renderer, default camera
 	Sim.App.prototype.init.call(this, param);
 	this.slides = new Queue();
+
     this.focus();
 }
 
@@ -52,16 +53,18 @@ SlidesApp.prototype.nextSlide = function()
     if (this.slides.current() != null)
     {
         var current = this.slides.current();
-        current.unsubscribeListeners();
-        current.object3D.visible = false;
+        current.done();
         this.removeObject(current);
     }
     slide = this.slides.next();
-    slide.object3D.visible = true;
+    //slide.object3D.visible = true;
+    // reset our camera if the slide changed it.
     this.addObject(slide);
-    slide.subscribe("slide_next", this, this.slideComplete);
-    slide.subscribe("slide_previous", this, this.previousSlide);
-    slide.nextAnimation();
+    //slide.subscribe("slide_next", this, this.slideComplete);
+    //slide.subscribe("slide_previous", this. this.previousSlide);
+    slide.go();
+
+    //slide.nextAnimation();
 }
 
 SlidesApp.prototype.previousSlide = function()
@@ -73,20 +76,26 @@ SlidesApp.prototype.previousSlide = function()
         return;
     }
     var slide = this.slides.current();
-    slide.object3D.visible = false;
-    slide.unsubscribeListeners();
-    slide.animations.reset(); // reset our animations since we are done with this slide for now.
+    slide.done();
+    //slide.object3D.visible = false;
+    //slide.unsubscribeListeners();
+    //slide.animations.reset(); // reset our animations since we are done with this slide for now.
     this.removeObject(slide);
 
     // go to the previous slide.
     //console.log("GOING TO PREVIOUS SLIDE!");
     slide = this.slides.prev();
-    slide.object3D.visible = true;
+    // reset our camera if the slide changed it.
+    
+    //this.resetCamera();
+    //slide.object3D.visible = true;
     this.addObject(slide);
+    
     // re-subscribe our listeners.
-    slide.subscribeListeners();
+    //slide.subscribeListeners();
     slide.reloadSlide();
 }
+
 
 
 SlidesApp.prototype.handleKeyDown = function(keyCode, charCode)
@@ -156,9 +165,9 @@ ObjectEffects.prototype.rotateOut = function(object3D)
 ObjectEffects.prototype.moveFloorIn = function(object3D)
 {
     var inPositionKeys = [0, .25, .75, 1];
-    var inPositionValues = [ { x : 0, y: 0, z : -100}, 
-                            { x: 0, y: 0, z: -75},
-                            { x: 0, y: 0, z: -50},
+    var inPositionValues = [ { x : 0, y: 0, z : -10000}, 
+                            { x: 0, y: 0, z: -750},
+                            { x: 0, y: 0, z: -500},
                             { x : 0, y: -1, z : 0}
                             ];
     return [ 
@@ -169,38 +178,36 @@ ObjectEffects.prototype.moveFloorOut = function(object3D)
 {
     var outPositionKeys = [0, .25, .75, 1];
     var outPositionValues = [ { x : 0, y: -1, z : 0}, 
-                            { x: 0, y: 0, z: -25},
-                            { x: 0, y: 0, z: -75},
-                            { x : 0, y: 0, z : -100}
+                            { x: 0, y: 0, z: -250},
+                            { x: 0, y: 0, z: -750},
+                            { x : 0, y: 0, z : -10000}
                             ];
     return [ 
             { keys:outPositionKeys, values:outPositionValues, target:object3D.position }
             ];
 }
 
-ObjectEffects.prototype.fadeIn = function( object3D )
+ObjectEffects.prototype.fadeIn = function( materials )
 {
     return [{ 
                 keys:[0, .5, 1], 
-                values:[
-                    { opacity : 0},
-                    { opacity : 0.5},
-                    { opacity : 1},
-                ],
-                target: object3D
+                values:[ { opacity: 0},
+                         { opacity: 0.5},
+                         { opacity: 1} 
+                         ],
+                target: materials
                 }];
 }
 
-ObjectEffects.prototype.fadeOut = function( object3D )
+ObjectEffects.prototype.fadeOut = function( materials )
 {
     return [{ 
                 keys:[0, .5, 1], 
-                values:[
-                    { opacity : 1},
-                    { opacity : 0.5},
-                    { opacity : 0},
-                ],
-                target: object3D
+                values:[ { opacity: 1},
+                         { opacity: 0.5},
+                         { opacity: 0} 
+                         ],
+                target: materials
                 }];
 }
 
@@ -247,6 +254,74 @@ SimpleSlide.prototype.init = function(App)
     this.animations = new Queue();
     this.animating = false;
     this.reloaded = false;
+    // Default camera positions. Modify values in the setCamera method
+    this.camera_pos = new Object();
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 0;
+    this.camera_pos.z = 3.3333;
+}
+
+// Called by our app
+SimpleSlide.prototype.go = function()
+{
+    if (this.object3D != null)
+    {
+        this.object3D.visible = true;
+    }
+    this.setCamera();
+    // Register subscribers to our 'app'
+    this.subscribe("slide_next", this.app, this.app.slideComplete);
+    this.subscribe("slide_previous", this.app, this.app.previousSlide);
+    this.nextAnimation();
+}
+
+// Called by our app
+SimpleSlide.prototype.done = function()
+{
+    this.object3D.visible = false;
+    this.unsubscribeListeners();
+    this.animations.reset(); // reset our animations since we are done with this slide for now.
+}
+
+SimpleSlide.prototype.create3dText = function(the_text, params)
+{
+    params = params || {};
+    shapes = THREE.FontUtils.generateShapes( "Hello world", {
+    font: "optimer",
+    weight: "bold",
+    size: 10
+    } );
+    geom = new THREE.ShapeGeometry( shapes );
+    mat = new THREE.MeshBasicMaterial();
+    mesh = new THREE.Mesh( geom, mat );
+
+
+    mesh.rotation.x = -Math.PI / 20;
+    return mesh;
+}
+// The default, each slide can override.
+SimpleSlide.prototype.setCamera = function()
+{
+    this.app.camera.x = this.camera_pos.x;
+    this.app.camera.y = this.camera_pos.y;
+    this.app.camera_z = this.camera_pos.z;
+}
+SimpleSlide.prototype.createText = function(the_text, params)
+{
+    var element = document.createElement( 'div' );
+    element.style.cssText = "font-size: 160px; color: rgba(255,255,255,0.5); width: 150; height:150; box-shadow: 0px 0px 12px rgba(0,255,255,0.5); border: 1px solid rgba(127,255,255,0.25);text-align: center; background-color: rgba(0,127,127," + ( Math.random() * 0.5 + 0.25 ) + ");";
+    element.innerHTML = the_text;
+    element.style.display = "block";
+    element.style.position = "absolute";
+    //element.style.left = 150 + 'px';
+    //element.style.top = 150 + 'px';
+    //document.body.appendChild(element);
+    var object = new THREE.CSS3DObject( element );
+    
+    object.position.x = Math.random() * 6 - 2;
+    object.position.y = Math.random() * 6 - 2;
+    object.position.z = Math.random() * 6 - 2;
+    return object;
 }
 
 SimpleSlide.prototype.animate = function(animation, on)
