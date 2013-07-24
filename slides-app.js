@@ -77,6 +77,7 @@ SlidesApp.prototype.previousSlide = function()
     }
     var slide = this.slides.current();
     slide.done();
+    //slide.animations.reset();
     //slide.object3D.visible = false;
     //slide.unsubscribeListeners();
     //slide.animations.reset(); // reset our animations since we are done with this slide for now.
@@ -85,9 +86,7 @@ SlidesApp.prototype.previousSlide = function()
     // go to the previous slide.
     //console.log("GOING TO PREVIOUS SLIDE!");
     slide = this.slides.prev();
-    // reset our camera if the slide changed it.
-    
-    //this.resetCamera();
+
     //slide.object3D.visible = true;
     this.addObject(slide);
     
@@ -239,6 +238,27 @@ ObjectEffects.prototype.transform = function( targets, duration, objects, render
         .start();
 }
 
+ObjectEffects.prototype.glowEffectMaterial = function (camera)
+{
+    var customMaterial = new THREE.ShaderMaterial( 
+    {
+        uniforms: 
+        { 
+            "c":   { type: "f", value: 1.0 },
+            "p":   { type: "f", value: 1.4 },
+            glowColor: { type: "c", value: new THREE.Color(0xffff00) },
+            viewVector: { type: "v3", value: camera.position }
+        },
+        vertexShader:   document.getElementById( 'glowvertexShader'   ).textContent,
+        fragmentShader: document.getElementById( 'glowfragmentShader' ).textContent,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        transparent: true
+    });
+    return customMaterial
+}
+
+
 /* BASIC SLIDE OBJECT */
 SimpleSlide = function()
 {
@@ -264,11 +284,13 @@ SimpleSlide.prototype.init = function(App)
 // Called by our app
 SimpleSlide.prototype.go = function()
 {
+    this.setCamera();
     if (this.object3D != null)
     {
         this.object3D.visible = true;
     }
-    this.setCamera();
+    
+    this.animations.reset();
     // Register subscribers to our 'app'
     this.subscribe("slide_next", this.app, this.app.slideComplete);
     this.subscribe("slide_previous", this.app, this.app.previousSlide);
@@ -280,48 +302,35 @@ SimpleSlide.prototype.done = function()
 {
     this.object3D.visible = false;
     this.unsubscribeListeners();
-    this.animations.reset(); // reset our animations since we are done with this slide for now.
+    this.setCamera();
+    //this.animations.reset(); // reset our animations since we are done with this slide for now.
 }
 
-SimpleSlide.prototype.create3dText = function(the_text, params)
+SimpleSlide.prototype.create2dText = function(the_text, size)
 {
-    params = params || {};
-    shapes = THREE.FontUtils.generateShapes( "Hello world", {
-    font: "optimer",
-    weight: "bold",
-    size: 10
-    } );
-    geom = new THREE.ShapeGeometry( shapes );
-    mat = new THREE.MeshBasicMaterial();
-    mesh = new THREE.Mesh( geom, mat );
-
-
+    var size = size || 50;
+    var canvas1 = document.createElement('canvas');
+    var context1 = canvas1.getContext('2d');
+    context1.font = size + "px Arial";
+    context1.fillStyle = "rgba(0,127,127," + ( Math.random() * 0.5 + 0.25 ) + ");";
+    context1.fillText(the_text, 0, 50);
+    
+    // canvas contents will be used for a texture
+    var text_texture = new THREE.Texture(canvas1) 
+    text_texture.needsUpdate = true;
+      
+    var material = new THREE.MeshBasicMaterial( {map: text_texture, side:THREE.DoubleSide } );
+    material.transparent = true;
+    var mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(canvas1.width, canvas1.height), material);
     mesh.rotation.x = -Math.PI / 20;
     return mesh;
 }
+
 // The default, each slide can override.
 SimpleSlide.prototype.setCamera = function()
 {
-    this.app.camera.x = this.camera_pos.x;
-    this.app.camera.y = this.camera_pos.y;
-    this.app.camera_z = this.camera_pos.z;
-}
-SimpleSlide.prototype.createText = function(the_text, params)
-{
-    var element = document.createElement( 'div' );
-    element.style.cssText = "font-size: 160px; color: rgba(255,255,255,0.5); width: 150; height:150; box-shadow: 0px 0px 12px rgba(0,255,255,0.5); border: 1px solid rgba(127,255,255,0.25);text-align: center; background-color: rgba(0,127,127," + ( Math.random() * 0.5 + 0.25 ) + ");";
-    element.innerHTML = the_text;
-    element.style.display = "block";
-    element.style.position = "absolute";
-    //element.style.left = 150 + 'px';
-    //element.style.top = 150 + 'px';
-    //document.body.appendChild(element);
-    var object = new THREE.CSS3DObject( element );
-    
-    object.position.x = Math.random() * 6 - 2;
-    object.position.y = Math.random() * 6 - 2;
-    object.position.z = Math.random() * 6 - 2;
-    return object;
+    this.app.camera.position.set(this.camera_pos.x, this.camera_pos.y, this.camera_pos.z);
 }
 
 SimpleSlide.prototype.animate = function(animation, on)
@@ -372,13 +381,14 @@ SimpleSlide.prototype.previousAnimation = function()
     //console.log("PREVIOUS ANIMATION CALLED!");
 
     this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
-    //console.log("previousAnimation index: " + this.animations.getIndex());
+    console.log("previousAnimation index: " + this.animations.getIndex());
     this.runAnimation(animation);
     
 }
 SimpleSlide.prototype.reloadSlide = function()
 {
     this.reloaded = true;
+    this.setCamera();
     this.previousAnimation();
 }
 /*

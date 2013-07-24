@@ -50,9 +50,8 @@ IntroSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
-    //animatorOut.subscribe("complete", this, this.onAnimationComplete);
 }
-slides.push(new IntroSlide());
+//slides.push(new IntroSlide());
 
 
 
@@ -131,8 +130,8 @@ MyBioSlide.prototype.createParticles = function()
 {
      var particles = {
         positionStyle    : Type.CUBE,
-        positionBase     : new THREE.Vector3( 0, 200, 0 ),
-        positionSpread   : new THREE.Vector3( 500, 0, 500 ),
+        positionBase     : new THREE.Vector3( 0, 100, this.root.position.z ),
+        positionSpread   : new THREE.Vector3( 500, 0, 150 ),
         
         velocityStyle    : Type.CUBE,
         velocityBase     : new THREE.Vector3( 0, -60, 0 ),
@@ -142,7 +141,7 @@ MyBioSlide.prototype.createParticles = function()
         angleBase               : 0,
         angleSpread             : 720,
         angleVelocityBase       :  0,
-        angleVelocitySpread     : 60,
+        angleVelocitySpread     : 20,
         
         particleTexture : THREE.ImageUtils.loadTexture( 'resources/sakura6.png' ),
             
@@ -150,7 +149,7 @@ MyBioSlide.prototype.createParticles = function()
         colorBase   : new THREE.Vector3(0.66, 1.0, 0.9), // H,S,L
         opacityTween : new Tween( [2, 3], [0.8, 0] ),
 
-        particlesPerSecond : 200,
+        particlesPerSecond : 25,
         particleDeathAge   : 4.0,        
         emitterDeathAge    : 120
     };
@@ -171,10 +170,10 @@ MyBioSlide.prototype.update = function()
     this.engine.update( dt * 0.5 );  
     Sim.Object.prototype.update.call(this);
 }
-slides.push(new MyBioSlide());
+//slides.push(new MyBioSlide());
 
 
-// SLIDE #2
+// SLIDE #3
 PBGamesSlide = function()
 {
     this.name = "PBGamesSlide";
@@ -186,6 +185,10 @@ PBGamesSlide.prototype = new SimpleSlide();
 PBGamesSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 0;
+    this.camera_pos.z = 30;
+
     this.game_images = [
         "aa.jpg", 1, 1,
         "acr.jpg", 1, 2,
@@ -221,13 +224,12 @@ PBGamesSlide.prototype.init = function(App)
     {
         var geometry = new THREE.PlaneGeometry(3, 3);
         var texture = THREE.ImageUtils.loadTexture("resources/titles/"+this.game_images[i]);
-        var material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture, transparent: true});
+        var material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture, transparent: true, opacity: 0});
         this.materials.push(material);
-        //var mesh = new THREE.Mesh( geometry, material );
         var object = new THREE.Mesh( geometry, material );
-        object.position.x = Math.random() * 6 - 2;
-        object.position.y = Math.random() * 6 - 2;
-        object.position.z = Math.random() * 6 - 2;
+        object.position.x = Math.random() * 7 - 2;
+        object.position.y = Math.random() * 5 - 2;
+        object.position.z = Math.random() * 15 - 2;
         this.root.add(object);
         this.image_objects.push(object);
 
@@ -238,6 +240,7 @@ PBGamesSlide.prototype.init = function(App)
     }
 
     // Sphere.
+    /*
     var vector = new THREE.Vector3();
     for ( var i = 0, l = this.image_objects.length; i < l; i++) 
     {
@@ -256,7 +259,8 @@ PBGamesSlide.prototype.init = function(App)
         this.targets.sphere.push( object );
 
     }
-    this.root.position.z = -30;
+    */
+    //this.root.position.z = -30;
     this.setObject3D(this.root);
     this.initAnimations();
 }
@@ -277,12 +281,23 @@ PBGamesSlide.prototype.initAnimations = function()
     animatorOut.init({ 
         interps: ObjectEffects.prototype.fadeOut(this.materials),
         loop: false,
-        duration: 2000
+        duration: 1000
     });    
 
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
-    //animatorOut.subscribe("complete", this, this.onAnimationComplete);
+}
+PBGamesSlide.prototype.nextAnimation = function()
+{
+    // if we are reloaded our opacity will be reset.
+    if (this.animations.isBeginning())
+    {
+        for (var i = 0; i < this.materials.length; i++)
+        {
+            this.materials[i].opacity = 0;
+        }        
+    }
+    SimpleSlide.prototype.nextAnimation.call(this)
 }
 
 PBGamesSlide.prototype.onAnimationComplete = function()
@@ -295,7 +310,6 @@ PBGamesSlide.prototype.onAnimationComplete = function()
     //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
     if (this.animations.isBeginning())
     {
-        //this.app.camera.position.z = 30;
         ObjectEffects.prototype.transform( this.targets.table, 2000, this.image_objects, this.tweenRender );
     }
     if (this.animations.isEnd() && this.reloaded == false)
@@ -338,33 +352,75 @@ PunkBusterServicesSlide.prototype = new SimpleSlide();
 PunkBusterServicesSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.materials = [];
     this.root = new THREE.Object3D();
-    
+    // bfp4f    
     var texture = THREE.ImageUtils.loadTexture("resources/BattlefieldPlay4Free_box.jpg");
-    var material = new THREE.MeshLambertMaterial( { color: 0x888888, transparent: true, side: THREE.FrontSide}); //map: texture, 
-    var geometry = new THREE.CubeGeometry(0.5,0.5,0.2);
-    var mesh = new THREE.Mesh(geometry, material);
-    var spotlight = new THREE.SpotLight(0xffff00);
-    spotlight.position.set(-60,150,-30);
-    spotlight.shadowCameraVisible = true;
-    spotlight.shadowDarkness = 0.95;
+    var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: texture, transparent: true, opacity: 0}); //
+    this.materials.push(material);
+    var geometry = new THREE.CubeGeometry(100,100,10);
+    var bfp4f = new THREE.Mesh(geometry, material);
+    bfp4f.position.set(250,220,5);
+    bfp4f.rotation.y =  Math.PI*1.68;
+    bfp4f.rotation.x = -0.01;
+
+    // Note that the mesh is flagged to cast shadows
+    bfp4f.castShadow = true;
+    this.root.add(bfp4f);
+    
+    this.app.renderer.shadowMapEnabled = true;
+
+    //spot light
+    // spotlight #1 -- yellow, dark shadow
+    var spotlight = new THREE.SpotLight(0xFFFFFF);
+    spotlight.position.set(-75,25,100);
+    spotlight.shadowCameraVisible = false;
+    spotlight.shadowDarkness = 0.15;
     spotlight.intensity = 2;
     // must enable shadow casting ability for the light
     spotlight.castShadow = true;
     this.root.add(spotlight);
-    var cubeGeometry = new THREE.CubeGeometry( 50, 50, 50 );
-    var cubeMaterial = new THREE.MeshLambertMaterial( { color: 0x888888 } );
-    cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
-    cube.position.set(0,50,0);
-    // Note that the mesh is flagged to cast shadows
-    cube.castShadow = true;
-    this.root.add(cube);
-    // floor: mesh to receive shadows
+
+    // change the direction this spotlight is facing
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position = bfp4f.position;
+    this.root.add(lightTarget);
+    spotlight.target = lightTarget;
+    
+    var spotlight3 = new THREE.SpotLight(0x0000ff);
+    spotlight3.position.set(-250,250,-100);
+    spotlight3.shadowCameraVisible = true;
+    spotlight3.shadowDarkness = 0.95;
+    spotlight3.intensity = 2;
+    spotlight3.castShadow = true;
+    this.root.add(spotlight3);
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,0,5);
+    spotlight3.target = lightTarget;
+    this.root.add(lightTarget);
+
+    // text objects
+    this.pbcl_text = this.create2dText("pbcl.dll", 120);
+    this.pbcl_text.position.set(0,60,0);
+    //this.root.add(this.pbcl_text);
+    
+    /* GLOW EFFECT */
+    /*
+    var glowMaterial = ObjectEffects.prototype.glowEffectMaterial(this.app.camera);
+    this.glow = new THREE.Mesh( geometry.clone(), glowMaterial.clone() );
+    this.glow.position = bfp4f.position;//(bfp4f.position.x, bfp4f.position.y, bfp4f.position.z);
+    this.glow.rotation = bfp4f.rotation;
+    this.glow.scale.multiplyScalar(1.2);
+    this.root.add(this.glow);
+    */
+
+    // FLOOR: mesh to receive shadows
     var floorTexture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
     floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
     floorTexture.repeat.set( 10, 10 );
     // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: floorTexture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
+    this.materials.push(floorMaterial);
     var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
     var floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.position.y = -0.5;
@@ -372,15 +428,7 @@ PunkBusterServicesSlide.prototype.init = function(App)
     // Note the mesh is flagged to receive shadows
     floor.receiveShadow = true;
     this.root.add(floor);
-    var sphereGeometry = new THREE.SphereGeometry( 10, 16, 8 );
-    var darkMaterial = new THREE.MeshBasicMaterial( { color: 0x000000 } );
-        
-    var wireframeMaterial = new THREE.MeshBasicMaterial( 
-        { color: 0xffff00, wireframe: true, transparent: true } ); 
-    var shape = THREE.SceneUtils.createMultiMaterialObject( 
-        sphereGeometry, [ darkMaterial, wireframeMaterial ] );
-    shape.position = spotlight.position;
-    this.root.add(shape);
+   
     this.setObject3D(this.root);
     this.initAnimations();
 }
@@ -390,77 +438,22 @@ PunkBusterServicesSlide.prototype.runAnimation = function(animation)
     this.animating = !this.animating; // set animating to true.
     this.animate(animation, this.animating);
 }
-PunkBusterServicesSlide.prototype.junk = function()
-{
-    
-    spotlight.shadowCameraVisible = true;
-    spotlight.shadowDarkness = 0.95;
-    spotlight.position.x = 1.8;
-    spotlight.position.y = 1.4;
-    spotlight.position.z = 0.5;
-    mesh.castShadow = true;
-    spotlight.intensity = 6;
-    // must enable shadow casting ability for the light
-    spotlight.castShadow = true;
-    /*this.pbcl_text = this.create3dText("pbcl.dll");
-    this.pnkbstra_text = this.createText("PnkBstrA.exe");
-    this.pnkbstrb_text = this.createText("PnkBstrB.exe");
-    this.pbag_text = this.createText("pbag.dll");
-    this.pbsv_text = this.createText("pbsv.dll");*/
-    var floorTexture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
-    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-    floorTexture.repeat.set( 10, 10 );
-    // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: floorTexture, side: THREE.DoubleSide } );
-    var floorGeometry = new THREE.PlaneGeometry(50, 50, 100, 100);
-    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.position.z = -35;
-    floor.position.y = -2;
-    floor.rotation.x = Math.PI / 2;
-    // Note the mesh is flagged to receive shadows
-    floor.receiveShadow = true;
-
-    mesh.position.x = 1.5;
-    mesh.position.y = 0.98;
-    mesh.rotation.y = -0.2;
-    // light ball
-    var sphereGeometry = new THREE.SphereGeometry( 0.4, 0.4, 0.4 );
-    var darkMaterial = new THREE.MeshBasicMaterial( { color: 0x000000 } );
-    var wireframeMaterial = new THREE.MeshBasicMaterial( 
-        { color: 0xffff00, wireframe: true, transparent: true } ); 
-    var shape = THREE.SceneUtils.createMultiMaterialObject( 
-        sphereGeometry, [ darkMaterial, wireframeMaterial ] );
-    shape.position = spotlight.position;
-    this.root.add(floor);
-    this.root.add(mesh);
-    this.root.add(spotlight);
-    this.root.add(shape);
-
-    //this.pbcl_text.position.x = 1.45;
-    //this.pbcl_text.position.y = -0.01;
-    this.root.position.z = 0;
-    //this.root.add(this.pbcl_text);
-    //this.root.add(mesh);
-    
-    this.setObject3D(this.root);
-    this.initAnimations();
-}
 
 PunkBusterServicesSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
     animatorIn.name = "animatorIn";
     animatorIn.init({ 
-        interps: ObjectEffects.prototype.moveFloorIn(this.object3D),
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
-        duration: 500
+        duration: 5000
     });
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.name = "animatorIn";
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.moveFloorOut(this.object3D),
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
         loop: false,
         duration: 500
     });    
@@ -468,4 +461,18 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
 }
+
+PunkBusterServicesSlide.prototype.nextAnimation = function()
+{
+    // if we are reloaded our opacity will be reset.
+    if (this.animations.isBeginning())
+    {
+        for (var i = 0; i < this.materials.length; i++)
+        {
+            this.materials[i].opacity = 0;
+        }        
+    }
+    SimpleSlide.prototype.nextAnimation.call(this)
+}
+
 slides.push(new PunkBusterServicesSlide());
