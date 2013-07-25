@@ -170,7 +170,7 @@ MyBioSlide.prototype.update = function()
     this.engine.update( dt * 0.5 );  
     Sim.Object.prototype.update.call(this);
 }
-//slides.push(new MyBioSlide());
+slides.push(new MyBioSlide());
 
 
 // SLIDE #3
@@ -336,7 +336,7 @@ PBGamesSlide.prototype.update = function ()
     TWEEN.update();
     Sim.Object.prototype.update.call(this);
 }
-//slides.push(new PBGamesSlide());
+slides.push(new PBGamesSlide());
 
 
 
@@ -358,7 +358,7 @@ PunkBusterServicesSlide.prototype.init = function(App)
     var texture = THREE.ImageUtils.loadTexture("resources/BattlefieldPlay4Free_box.jpg");
     var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: texture, transparent: true, opacity: 0}); //
     this.materials.push(material);
-    var geometry = new THREE.CubeGeometry(100,100,10);
+    var geometry = new THREE.CubeGeometry(100,150,10);
     var bfp4f = new THREE.Mesh(geometry, material);
     bfp4f.position.set(250,220,5);
     bfp4f.rotation.y =  Math.PI*1.68;
@@ -373,8 +373,8 @@ PunkBusterServicesSlide.prototype.init = function(App)
     //spot light
     // spotlight #1 -- yellow, dark shadow
     var spotlight = new THREE.SpotLight(0xFFFFFF);
-    spotlight.position.set(-75,25,100);
-    spotlight.shadowCameraVisible = false;
+    spotlight.position.set(-350,25,100);
+    spotlight.shadowCameraVisible = true;
     spotlight.shadowDarkness = 0.15;
     spotlight.intensity = 2;
     // must enable shadow casting ability for the light
@@ -404,6 +404,29 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.pbcl_text.position.set(0,60,0);
     //this.root.add(this.pbcl_text);
     
+    // Gear Model
+    var loader = new THREE.ColladaLoader();
+    var that = this;
+    this.dae = new THREE.Object3D();
+    loader.load.call(this, "resources/models/Gear-Handmade.dae", function ( collada ) {
+
+                that.dae = collada.scene;
+                skin = collada.skins[ 0 ];
+
+                that.dae.scale.x = that.dae.scale.y = that.dae.scale.z = 25;
+                that.dae.position.x = -1;
+                that.dae.position.y = 250;
+                that.dae.position.z = -50;
+                // set the model to the center so we can rotate it properly.
+                that.dae.children[0].position.set(0,0,0); 
+                that.dae.updateMatrix();
+                that.dae.children[0].visible = false;
+                that.root.add(that.dae);
+    });
+
+    
+
+
     /* GLOW EFFECT */
     /*
     var glowMaterial = ObjectEffects.prototype.glowEffectMaterial(this.app.camera);
@@ -461,7 +484,15 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
 }
-
+PunkBusterServicesSlide.prototype.update = function()
+{
+    //if (this.dae.children[0] != undefined)
+    //    this.dae.children[0].rotation.z += 0.01;
+    //this.dae.rotation.z += 0.1;
+    //if (this.dae.children[0])
+    //this.dae.children[0].visible = false;
+    Sim.Object.prototype.update.call(this);
+}
 PunkBusterServicesSlide.prototype.nextAnimation = function()
 {
     // if we are reloaded our opacity will be reset.

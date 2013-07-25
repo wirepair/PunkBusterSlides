@@ -13,16 +13,25 @@ SlidesApp.prototype.init = function(param)
 {
 	// Call superclass init code to set up scene, renderer, default camera
 	Sim.App.prototype.init.call(this, param);
-	this.slides = new Queue();
-
+	this.slides = new Queue(); // our queue to hold each slide.
     this.focus();
 }
 
+/*
+ * Initial start of our slides 
+ */
 SlidesApp.prototype.start = function()
 {
     this.nextSlide();
 }
 
+/*
+ * Adds each slide to our queue of slides. 
+ * @param slides - Array
+ * 
+ * @calls - nextSlide
+ *
+ */
 SlidesApp.prototype.registerSlides = function(slides)
 {
     this.slides.setList(slides);
@@ -33,12 +42,25 @@ SlidesApp.prototype.registerSlides = function(slides)
     this.slides.reset();
     this.nextSlide();
 }
-
+/*
+ * slideComplete - called when a user hits the right arrow and the call back
+ * is recieved
+ * @calls - nextSlide
+ *
+ */
 SlidesApp.prototype.slideComplete = function()
 {
-    //console.log("SlidesApp.slideComplete SLIDE COMPLETETETLTELTELTEL");
     this.nextSlide();
 }
+
+/*
+ * nextSlide - Checks if we are at the the end of the slide deck.
+ * Next, checks if we have a current slide and if we do call it's
+ * done method to close down subscribers, hide the root mesh object etc.
+ * Then it prepares the next slide adds the object and calls it's go method.
+ *
+ * @calls - slide.go()
+ */
 SlidesApp.prototype.nextSlide = function()
 {
     console.log("SlidesApp.nextSlide");
@@ -57,16 +79,23 @@ SlidesApp.prototype.nextSlide = function()
         this.removeObject(current);
     }
     slide = this.slides.next();
-    //slide.object3D.visible = true;
-    // reset our camera if the slide changed it.
     this.addObject(slide);
-    //slide.subscribe("slide_next", this, this.slideComplete);
-    //slide.subscribe("slide_previous", this. this.previousSlide);
     slide.go();
-
-    //slide.nextAnimation();
 }
 
+/* 
+ * previousSlide - Called by our pub/sub callback when the user
+ * presses the left arrow key and their are no more animations left.
+ * Checks if we are at the beginning (does nothing if we are). 
+ * Get's an instance of the current slide (the one that we were just on)
+ * and calls it's done method and removes the slide from our list of
+ * current objects.
+ *
+ * Then we get a reference to the previous slide, re-add it and call
+ * the slides reloadSlide method which helps reset our animations etc.
+ *
+ * @calls - slide.reloadSlide()
+ */
 SlidesApp.prototype.previousSlide = function()
 {
     console.log("SlidesApp.previousSlide");
@@ -77,26 +106,27 @@ SlidesApp.prototype.previousSlide = function()
     }
     var slide = this.slides.current();
     slide.done();
-    //slide.animations.reset();
-    //slide.object3D.visible = false;
-    //slide.unsubscribeListeners();
-    //slide.animations.reset(); // reset our animations since we are done with this slide for now.
     this.removeObject(slide);
 
     // go to the previous slide.
     //console.log("GOING TO PREVIOUS SLIDE!");
     slide = this.slides.prev();
-
-    //slide.object3D.visible = true;
     this.addObject(slide);
-    
-    // re-subscribe our listeners.
-    //slide.subscribeListeners();
+
     slide.reloadSlide();
 }
 
 
-
+/* 
+ * handleKeyDown - The top level key handler which propagates the key event
+ * down to each slide. Grabs a reference to the current slide and calls it's
+ * handleKeyDown method.
+ * @param keyCode - the key code
+ * @param charCode - the char code ( i think this is for some other browsers )
+ *
+ * @calls slide.handleKeyDown
+ *
+ */
 SlidesApp.prototype.handleKeyDown = function(keyCode, charCode)
 {
     var slide = this.slides.current();
@@ -107,11 +137,19 @@ SlidesApp.prototype.handleKeyDown = function(keyCode, charCode)
     slide.handleKeyDown.call(slide, keyCode, charCode);
 }
 
-SlidesApp.prototype.onAnimationComplete = function()
-{
+//SlidesApp.prototype.onAnimationComplete = function()
+//{
     //console.log("SlidesApp.onAnimationComplete complete.");
-}
+//}
 
+
+/*
+ * update - Called for every render tick propgates to the
+ * Sim.Object which iterates over every object currently set
+ * in the scene.
+ * 
+ * @calls - Sim.App.update()
+ */
 SlidesApp.prototype.update = function()
 {
     Sim.App.prototype.update.call(this);
@@ -124,6 +162,12 @@ ObjectEffects = function()
 }
 ObjectEffects.prototype = new Object();
 
+/*
+ * rotateIn - rotates the object (either root or single object) by
+ * setting keys and values to be interpolated from a negative z incrementally to a positive
+ * z axis.
+ *
+ */
 ObjectEffects.prototype.rotateIn = function(object3D)
 {
     var inPositionKeys = [0, .25, .75, 1];
@@ -143,6 +187,13 @@ ObjectEffects.prototype.rotateIn = function(object3D)
             ];
 }
 
+
+/*
+ * rotateIn - rotates the object (either root or single object) by
+ * setting keys and values to be interpolated from a positive z incrementally to a negative
+ * z axis.
+ *
+ */
 ObjectEffects.prototype.rotateOut = function(object3D)
 {
     var outPositionKeys = [0, .25, .75, 1];
@@ -161,6 +212,13 @@ ObjectEffects.prototype.rotateOut = function(object3D)
             { keys:outRotationKeys, values:outRotationValues, target:object3D.rotation } 
             ];
 }
+
+/*
+ * moveFloorIn - moves the object (either root or single object) by
+ * setting keys and values to be interpolated from a negative z incrementally to a positive
+ * z axis.
+ *
+ */
 ObjectEffects.prototype.moveFloorIn = function(object3D)
 {
     var inPositionKeys = [0, .25, .75, 1];
@@ -173,6 +231,13 @@ ObjectEffects.prototype.moveFloorIn = function(object3D)
             { keys:inPositionKeys, values:inPositionValues, target:object3D.position }
             ];
 }
+
+/*
+ * moveFloorOut - moves the object (either root or single object) by
+ * setting keys and values to be interpolated from a positive z incrementally to a negative
+ * z axis.
+ *
+ */
 ObjectEffects.prototype.moveFloorOut = function(object3D)
 {
     var outPositionKeys = [0, .25, .75, 1];
@@ -186,6 +251,10 @@ ObjectEffects.prototype.moveFloorOut = function(object3D)
             ];
 }
 
+/*
+ * fadeIn - Set's an array of materials opacity level from 0 (transparent) to 1.
+ * 
+ */
 ObjectEffects.prototype.fadeIn = function( materials )
 {
     return [{ 
@@ -198,6 +267,10 @@ ObjectEffects.prototype.fadeIn = function( materials )
                 }];
 }
 
+/*
+ * fadeOut - Set's an array of materials opacity level from 1 (visible) to 0 (transparent).
+ * 
+ */
 ObjectEffects.prototype.fadeOut = function( materials )
 {
     return [{ 
@@ -210,6 +283,10 @@ ObjectEffects.prototype.fadeOut = function( materials )
                 }];
 }
 
+/*
+ * transform - Badly named, wrong location animation sequence using TWEEN.
+ * 
+ */
 ObjectEffects.prototype.transform = function( targets, duration, objects, render_callback )
 {
     TWEEN.removeAll();
@@ -237,7 +314,11 @@ ObjectEffects.prototype.transform = function( targets, duration, objects, render
         .onUpdate( render_callback )
         .start();
 }
-
+/*
+ * glowEffectMaterial - Uses a custom shader to make a glowing effect. Requires the camera
+ * Not sure why...
+ *
+ */
 ObjectEffects.prototype.glowEffectMaterial = function (camera)
 {
     var customMaterial = new THREE.ShaderMaterial( 
@@ -259,6 +340,16 @@ ObjectEffects.prototype.glowEffectMaterial = function (camera)
 }
 
 
+ObjectEffects.prototype.rotateAroundObjectAxis = function(object, axis, radians) {
+    // new code for Three.js r50+
+    object.matrix.makeRotationZ(radians);
+
+    // old code for Three.js r49 and earlier:
+    // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+}
+
+
+
 /* BASIC SLIDE OBJECT */
 SimpleSlide = function()
 {
@@ -272,8 +363,9 @@ SimpleSlide.prototype.init = function(App)
 {
     this.app = App; // save a ref to our app.
     this.animations = new Queue();
-    this.animating = false;
-    this.reloaded = false;
+    this.animating = false; // is the slide currently running an animation?
+    this.reloaded = false;  // has the slide been reloaded (via previousSlide)?
+
     // Default camera positions. Modify values in the setCamera method
     this.camera_pos = new Object();
     this.camera_pos.x = 0;
@@ -281,7 +373,17 @@ SimpleSlide.prototype.init = function(App)
     this.camera_pos.z = 3.3333;
 }
 
-// Called by our app
+/*
+ * go - Called by our app container during nextSlide. Sets the object3d visible if 
+ * we were 'reloaded'. Resets animations back to their beginning. Also sets up
+ * subscribers to notify the container app if it needs to go to the previous slide
+ * or the next slide. Previous slides are called if the user hits the left arrow
+ * and we are currently at the beginning of our animation queue. Likewise,
+ * next slide is called when we are at the end of our animation queue.
+ *
+ * @calls - nextAnimation to kick off the first animation.
+ *
+ */ 
 SimpleSlide.prototype.go = function()
 {
     this.setCamera();
@@ -297,15 +399,22 @@ SimpleSlide.prototype.go = function()
     this.nextAnimation();
 }
 
-// Called by our app
+/*
+ * done - Called by our container app signaling that it should set it's
+ * objects to being invisible and unregister it's subsribers. Also resets
+ * the camera position (although this shouldn't really be necessary).
+ */
 SimpleSlide.prototype.done = function()
 {
     this.object3D.visible = false;
     this.unsubscribeListeners();
     this.setCamera();
-    //this.animations.reset(); // reset our animations since we are done with this slide for now.
 }
 
+/*
+ * create2dText - Creates text by creating a 2d canvas and maps it as a Texture.
+ * TODO: Add parameters so callers can modify text color/size etc.
+ */
 SimpleSlide.prototype.create2dText = function(the_text, size)
 {
     var size = size || 50;
@@ -327,17 +436,44 @@ SimpleSlide.prototype.create2dText = function(the_text, size)
     return mesh;
 }
 
-// The default, each slide can override.
+/*
+ * setCamera - Sets the camera position when a slide is first called. This is important 
+ * as it allows each slide to set it's own camera position. The defaults are set in 
+ * each slides init method. Each slide has the ability to override this method.
+ *
+ */
 SimpleSlide.prototype.setCamera = function()
 {
     this.app.camera.position.set(this.camera_pos.x, this.camera_pos.y, this.camera_pos.z);
 }
 
+/*
+ * animate - Called for every animation when a user hits a key. If an animation *is* running
+ * already, we stop it and publish the complete event.
+ * @params animation - An animation (Sim.KeyFrameAnimator)
+ * @params on - boolean if running or not. (this.animating).
+ *
+ * @calls animation.start() or stop()
+ *
+ */
 SimpleSlide.prototype.animate = function(animation, on)
 {
-    //console.log("animate: " + on);
     ( on ) ? animation.start() : animation.stop(); 
 }
+
+/*
+ * onAnimateComplete - Called when an animation completes. Reset's our is animating flag.
+ * We have to get a reference to the animation that just completed to unsubscribe it's
+ * complete message handler. 
+ *
+ * We also do a check to see if we are at the end of the slide and we have not been
+ * reloaded (via previousSlide call). In which case we call slide_next. If we are
+ * reloaded we have to unset the reloaded flag so that we can continue to the next slide
+ * if we want to.
+ *
+ * @calls publish("next_slide")
+ *
+ */
 SimpleSlide.prototype.onAnimationComplete = function()
 {
     this.animating = !this.animating; // reset our animation flag to false.
@@ -358,11 +494,16 @@ SimpleSlide.prototype.onAnimationComplete = function()
     {
         //console.log("Resetting reloaded flag.");
         this.reloaded = false;
-    }
-    
+    }    
 }
+
 /*
- * Increment our animation counter and call runAnimation
+ * nextAnimation - Called on start of slide or when a user hits the right arrow key.
+ * Subscribes to the complete message so we can be signaled when the animation completes.
+ * Then simply starts the animation.
+ *
+ *
+ * @calls - runAnimation
  */
 SimpleSlide.prototype.nextAnimation = function()
 {
@@ -372,8 +513,13 @@ SimpleSlide.prototype.nextAnimation = function()
     this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
     this.runAnimation(animation);
 }
+
 /* 
- * Run the previous animation.
+ * previousAnimation - Get a reference to the previous animation and subscribe to the
+ * complete message. Then runs the animation. This is called when the user hits the
+ * left arrow key.
+ *
+ * @calls runAnimation 
  */
 SimpleSlide.prototype.previousAnimation = function()
 {
@@ -385,6 +531,16 @@ SimpleSlide.prototype.previousAnimation = function()
     this.runAnimation(animation);
     
 }
+
+/*
+ * reloadSlide - Called by container app when the user hits the left arrow key
+ * to signify they want to return to the preious slide. Sets the reloaded flag
+ * to true so once the animation completes we don't automatically go to the next
+ * slide.
+ *
+ * @calls - previousAnimation();
+ *
+ */
 SimpleSlide.prototype.reloadSlide = function()
 {
     this.reloaded = true;
@@ -392,16 +548,24 @@ SimpleSlide.prototype.reloadSlide = function()
     this.previousAnimation();
 }
 /*
- * Check if need to reset object visibility (we were called from previousSlide)
- * We determine that by checking our index and seeing if is the same as our length. 
- * If it is we re-decrement it and set the objects visibility to true.
+ * runAnimation - Called with an animation and sets the flag to animating.
+ * 
+ * @param animation - a Sim.KeyFrameAnimation
+ *
+ * @calls - this.animate
  */
 SimpleSlide.prototype.runAnimation = function(animation)
 {
     this.animating = !this.animating; // set animating to true.
     this.animate(animation, this.animating);
 }
-// Allow each slide to handle key events.
+
+/*
+ * handleKeyDown - called on key down event, propgated up from our
+ * container app. Here is where we determine if we need to go to the next
+ * animation, or next slide. Or previous animation or previous slide.
+ *
+ */
 SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
 {
     switch(keyCode)
@@ -442,12 +606,24 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
             break;
     }
 }
+
+/*
+ * subscribeListeners - Subscribes so we can publish the slide next
+ * and previous messages.
+ *
+ */
 SimpleSlide.prototype.subscribeListeners = function()
 {
     this.subscribe("slide_previous", this, this.previousSlide);
     this.subscribe("slide_next", this, this.nextSlide);
 }
 
+/*
+ * unsubscribeListeners - unsubscribes so we we don't mess up
+ * our various slide state by listening for messages for a slide
+ * we are not on.
+ *
+ */
 SimpleSlide.prototype.unsubscribeListeners = function()
 {
     this.unsubscribe("slide_previous", this);

@@ -220,3 +220,6 @@ Sim.Interpolator.prototype.tween = function(from, to, fract)
 	
 	return value;
 }
+
+/* idawson add.. ability to chain animations. */
+
