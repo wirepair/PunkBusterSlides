@@ -309,10 +309,12 @@ ObjectEffects.prototype.transform = function( targets, duration, objects, render
 
     }
 
+    /*
     new TWEEN.Tween( this )
         .to( {}, duration * 2 )
         .onUpdate( render_callback )
         .start();
+        */
 }
 /*
  * glowEffectMaterial - Uses a custom shader to make a glowing effect. Requires the camera
@@ -394,8 +396,10 @@ SimpleSlide.prototype.go = function()
     
     this.animations.reset();
     // Register subscribers to our 'app'
-    this.subscribe("slide_next", this.app, this.app.slideComplete);
-    this.subscribe("slide_previous", this.app, this.app.previousSlide);
+    //this.subscribe("slide_next", this.app, this.app.slideComplete);
+    //this.subscribe("slide_previous", this.app, this.app.previousSlide);
+    g_publisher.subscribe("slide_next", this.app, this.app.slideComplete);
+    g_publisher.subscribe("slide_previous", this.app, this.app.previousSlide);
     this.nextAnimation();
 }
 
@@ -480,14 +484,16 @@ SimpleSlide.prototype.onAnimationComplete = function()
     var animation = this.animations.current();
     // really irritating, "complete" must be set in animations context, due to the animation calling publish("complete")
     // but 'this' has to be set to our Slide.
-    this.unsubscribe.call(animation, "complete", this);
+    //this.unsubscribe.call(animation, "complete", this);
+    g_publisher.unsubscribe("complete", this);
     //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
     
     if (this.animations.isEnd() && this.reloaded == false)
     {
         //console.log("all animations complete:" + this.name);
         //console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
-        this.publish("slide_next");
+        //this.publish("slide_next");
+        g_publisher.publish("slide_next");
     }
 
     if (this.reloaded == true)
@@ -510,7 +516,8 @@ SimpleSlide.prototype.nextAnimation = function()
     //console.log("nextAnimation index: " + this.animations.getIndex());
     var animation = this.animations.next();
 
-    this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
+    //this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
+    g_publisher.subscribe("complete", this, this.onAnimationComplete);
     this.runAnimation(animation);
 }
 
@@ -526,7 +533,8 @@ SimpleSlide.prototype.previousAnimation = function()
     var animation = this.animations.prev();
     //console.log("PREVIOUS ANIMATION CALLED!");
 
-    this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
+    //this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
+    g_publisher.subscribe(animation, "complete", this, this.onAnomationComplete);
     console.log("previousAnimation index: " + this.animations.getIndex());
     this.runAnimation(animation);
     
@@ -575,7 +583,8 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
             {
                 if (this.animating == false)
                 {
-                    this.publish("slide_previous");
+                    //this.publish("slide_previous");
+                    g_publisher.publish("slide_previous");
                 }
             } 
             else
@@ -592,7 +601,8 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
             {
                 if (this.animating == false)
                 {
-                    this.publish("slide_next");
+                    //this.publish("slide_next");
+                    g_publisher.publish("slide_next");
                 }
             }
             else
@@ -614,8 +624,10 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
  */
 SimpleSlide.prototype.subscribeListeners = function()
 {
-    this.subscribe("slide_previous", this, this.previousSlide);
-    this.subscribe("slide_next", this, this.nextSlide);
+    //this.subscribe("slide_previous", this, this.previousSlide);
+    //this.subscribe("slide_next", this, this.nextSlide);
+    g_publisher.subscribe("slide_previous", this, this.previousSlide);
+    g_publisher.subscribe("slide_next", this, this.nextSlide);
 }
 
 /*
@@ -626,8 +638,11 @@ SimpleSlide.prototype.subscribeListeners = function()
  */
 SimpleSlide.prototype.unsubscribeListeners = function()
 {
-    this.unsubscribe("slide_previous", this);
-    this.unsubscribe("slide_next", this);
+
+    //this.unsubscribe("slide_previous", this);
+    //this.unsubscribe("slide_next", this);
+    g_publisher.unsubscribe("slide_previous", this);
+    g_publisher.unsubcribe("slide_next", this);
 }
 
 

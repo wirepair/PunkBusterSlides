@@ -170,7 +170,7 @@ MyBioSlide.prototype.update = function()
     this.engine.update( dt * 0.5 );  
     Sim.Object.prototype.update.call(this);
 }
-slides.push(new MyBioSlide());
+//slides.push(new MyBioSlide());
 
 
 // SLIDE #3
@@ -267,6 +267,7 @@ PBGamesSlide.prototype.init = function(App)
 
 PBGamesSlide.prototype.initAnimations = function()
 {
+    /*
     var animatorIn = new Sim.KeyFrameAnimator;
     animatorIn.name = "animatorIn";
     animatorIn.init({ 
@@ -276,6 +277,20 @@ PBGamesSlide.prototype.initAnimations = function()
     });
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
+    */
+
+    var animatorIn = new Sim.AnimationGroup;
+    animatorIn.name = "animatorIn";
+    var fadeIn = this.createFadeIn();
+    animatorIn.add(fadeIn);
+    //var moveObjects = this.moveObjects(animatorIn, this.targets.table, this.image_objects, 2000);
+    //animatorIn.add(moveObjects);
+    animatorIn.init();
+
+    this.addChild(animatorIn);
+    this.animations.push(animatorIn);
+
+
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.name = "animatorOut";
     animatorOut.init({ 
@@ -287,6 +302,50 @@ PBGamesSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
 }
+PBGamesSlide.prototype.createFadeIn = function()
+{
+    var fadeIn = new Sim.KeyFrameAnimator;
+    fadeIn.name = "animatorIn";
+    fadeIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 1000
+    });
+    return fadeIn;
+}
+PBGamesSlide.prototype.moveObjects = function(objects, targets, duration)
+{
+
+    TWEEN.removeAll();
+    var tweens = [];
+    for ( var i = 0; i < objects.length; i ++ ) 
+    {
+
+        var object = objects[ i ];
+        var target = targets[ i ];
+
+        tweens.push(new TWEEN.Tween( object.position )
+            .to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+            .easing( TWEEN.Easing.Exponential.InOut ));
+
+        tweens.push(new TWEEN.Tween( object.rotation )
+            .to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+            .easing( TWEEN.Easing.Exponential.InOut ));
+
+    }
+    for (var i = 0; i < objects.length; i++ )
+    {
+        tweens[i].start();
+    }
+    //var tweenjs = new Sim.TweenjsAnimator;
+    //tweenjs.init({tweens: tweens, duration: duration, onComplete: group.onGroupComplete});
+    //return tweenjs;
+}
+PBGamesSlide.prototype.donks = function()
+{
+    return;
+}
+
 PBGamesSlide.prototype.nextAnimation = function()
 {
     // if we are reloaded our opacity will be reset.
@@ -294,7 +353,7 @@ PBGamesSlide.prototype.nextAnimation = function()
     {
         for (var i = 0; i < this.materials.length; i++)
         {
-            this.materials[i].opacity = 0;
+            this.materials[i].opacity = 1;
         }        
     }
     SimpleSlide.prototype.nextAnimation.call(this)
@@ -306,17 +365,21 @@ PBGamesSlide.prototype.onAnimationComplete = function()
     var animation = this.animations.current();
     // really irritating, "complete" must be set in animations context, due to the animation calling publish("complete")
     // but 'this' has to be set to our Slide.
-    this.unsubscribe.call(animation, "complete", this);
+    //this.unsubscribe.call(animation, "complete", this);
+    g_publisher.unsubscribe("complete", this);
     //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
     if (this.animations.isBeginning())
     {
+        console.log("BONK");
         ObjectEffects.prototype.transform( this.targets.table, 2000, this.image_objects, this.tweenRender );
+        //this.moveObjects(this.targets.table, this.image_objects, 2000);
     }
     if (this.animations.isEnd() && this.reloaded == false)
     {
         //console.log("all animations complete:" + this.name);
         //console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
-        this.publish("slide_next");
+        //this.publish("slide_next");
+        g_publisher.publish("slide_next");
     }
 
     if (this.reloaded == true)

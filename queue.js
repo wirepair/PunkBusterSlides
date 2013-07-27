@@ -34,7 +34,7 @@ Queue.prototype.get = function(index)
 }
 Queue.prototype.last = function()
 {
-    return this.list[this.list.length];
+    return this.list[this.list.length-1];
 }
 Queue.prototype.next = function()
 {
