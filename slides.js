@@ -51,7 +51,7 @@ IntroSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-//slides.push(new IntroSlide());
+slides.push(new IntroSlide());
 
 
 
@@ -94,8 +94,6 @@ MyBioSlide.prototype.init = function(App)
     var line = new THREE.Line( geometry, material, THREE.LinePieces );
     
     this.root.add(s_mesh);
-    //line.position.y = -1;
-    
     this.root.add(line);
 
     // Tell the framework about our object
@@ -157,20 +155,13 @@ MyBioSlide.prototype.createParticles = function()
     this.engine.setValues( particles );
     this.engine.initialize();
 }
-MyBioSlide.prototype.reloadSlide = function()
-{
-    this.engine.destroy();
-    this.engine = new ParticleEngine(this.root);
-    this.createParticles();
-    SimpleSlide.prototype.reloadSlide.call(this);
-}
 MyBioSlide.prototype.update = function()
 {
     var dt = this.clock.getDelta();
     this.engine.update( dt * 0.5 );  
     Sim.Object.prototype.update.call(this);
 }
-//slides.push(new MyBioSlide());
+slides.push(new MyBioSlide());
 
 
 // SLIDE #3
@@ -260,31 +251,18 @@ PBGamesSlide.prototype.init = function(App)
 
     }
     */
-    //this.root.position.z = -30;
     this.setObject3D(this.root);
     this.initAnimations();
 }
 
 PBGamesSlide.prototype.initAnimations = function()
 {
-    /*
-    var animatorIn = new Sim.KeyFrameAnimator;
-    animatorIn.name = "animatorIn";
-    animatorIn.init({ 
-        interps: ObjectEffects.prototype.fadeIn(this.materials),
-        loop: false,
-        duration: 2000
-    });
-    this.addChild(animatorIn); 
-    this.animations.push(animatorIn);
-    */
-
     var animatorIn = new Sim.AnimationGroup;
     animatorIn.name = "animatorIn";
     var fadeIn = this.createFadeIn();
     animatorIn.add(fadeIn);
-    //var moveObjects = this.moveObjects(animatorIn, this.targets.table, this.image_objects, 2000);
-    //animatorIn.add(moveObjects);
+    var moveObjects = this.moveObjects(this.targets.table, this.image_objects, 2000);
+    animatorIn.add(moveObjects);
     animatorIn.init();
 
     this.addChild(animatorIn);
@@ -309,41 +287,33 @@ PBGamesSlide.prototype.createFadeIn = function()
     fadeIn.init({ 
         interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
-        duration: 1000
+        duration: 1500
     });
     return fadeIn;
 }
-PBGamesSlide.prototype.moveObjects = function(objects, targets, duration)
+PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
 {
 
     TWEEN.removeAll();
-    var tweens = [];
+    var tween_group = [];
     for ( var i = 0; i < objects.length; i ++ ) 
     {
 
         var object = objects[ i ];
         var target = targets[ i ];
 
-        tweens.push(new TWEEN.Tween( object.position )
+        tween_group.push(new TWEEN.Tween( object.position )
             .to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
             .easing( TWEEN.Easing.Exponential.InOut ));
 
-        tweens.push(new TWEEN.Tween( object.rotation )
+        tween_group.push(new TWEEN.Tween( object.rotation )
             .to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
             .easing( TWEEN.Easing.Exponential.InOut ));
 
     }
-    for (var i = 0; i < objects.length; i++ )
-    {
-        tweens[i].start();
-    }
-    //var tweenjs = new Sim.TweenjsAnimator;
-    //tweenjs.init({tweens: tweens, duration: duration, onComplete: group.onGroupComplete});
-    //return tweenjs;
-}
-PBGamesSlide.prototype.donks = function()
-{
-    return;
+    var tweenjs = new Sim.TweenjsAnimator;
+    tweenjs.init({tweens: tween_group, duration: duration * 2 }); //, onComplete: group.onGroupComplete
+    return tweenjs;
 }
 
 PBGamesSlide.prototype.nextAnimation = function()
@@ -353,12 +323,13 @@ PBGamesSlide.prototype.nextAnimation = function()
     {
         for (var i = 0; i < this.materials.length; i++)
         {
-            this.materials[i].opacity = 1;
+            this.materials[i].opacity = 0;
         }        
     }
     SimpleSlide.prototype.nextAnimation.call(this)
 }
 
+/*
 PBGamesSlide.prototype.onAnimationComplete = function()
 {
     this.animating = !this.animating; // reset our animation flag to false.
@@ -371,8 +342,8 @@ PBGamesSlide.prototype.onAnimationComplete = function()
     if (this.animations.isBeginning())
     {
         console.log("BONK");
-        ObjectEffects.prototype.transform( this.targets.table, 2000, this.image_objects, this.tweenRender );
-        //this.moveObjects(this.targets.table, this.image_objects, 2000);
+        //ObjectEffects.prototype.transform( this.targets.table, 2000, this.image_objects, this.tweenRender );
+        //this.moveObjects(null, this.targets.table, this.image_objects, 2000);
     }
     if (this.animations.isEnd() && this.reloaded == false)
     {
@@ -388,6 +359,7 @@ PBGamesSlide.prototype.onAnimationComplete = function()
         this.reloaded = false;
     }
 }
+*/
 
 PBGamesSlide.prototype.tweenRender = function ()
 {
@@ -536,6 +508,9 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     });
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
+
+    var serviceAnimation = 
+
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.name = "animatorIn";
     animatorOut.init({ 
@@ -546,6 +521,15 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
 
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
+}
+PunkBusterServicesSlide.prototype.buildServiceAnimations = function()
+{
+    var animation_group = new Sim.AnimationGroup;
+    animation_group.name = "service_animation";
+    
+    var gear_animation = new TweenjsAnimator();
+    animation_group.add();
+
 }
 PunkBusterServicesSlide.prototype.update = function()
 {

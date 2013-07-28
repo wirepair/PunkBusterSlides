@@ -26,14 +26,13 @@ Sim.AnimationGroup.prototype.init = function(param)
 }
 /*
  * setOnGroupComplete - If the animation group is chained we iterate over
- * all animations and reset their onComplete to the group's onComplete. The
- * final animation has an onGroupComplete method set for it's oncomplete
- * so we can signify when all are completed.
+ * all animations and set a on complete callback to the group's onComplete. The
+ * final animation has an onGroupComplete callback set so we can signify when all 
+ * are completed.
  *
  * For concurrent animations, we get the largest duration animation and
- * set that animations onComplete to the onGroupComplete.
+ * set that animations on_group_complete_callback to the onGroupComplete.
  *
- * Also note this will reset the animation list.
  */
 Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 {
@@ -41,14 +40,17 @@ Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 	do 
 	{
 		var animation = this.animations.next();
-		// set this.duration to the longest duration.
 		// also we only set the onGroupComplete of the longest running so
 		// we will know when all animations are done.
-		animation.onComplete = this.onComplete;
+		if (this.isChain)
+		{
+			animation.on_complete_callback = this.onComplete;
+		}
 		if (animation.duration >= final_animation.duration)
 		{
 			final_animation = animation;
 		}
+		animation.parent = this; // safe a reference to the parent so we can call()
 	} while( this.animations.peek() != null );
 	console.log("AnimationGroup has " + this.animations.length() + " animations.");
 	
@@ -56,11 +58,7 @@ Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 	{
 		final_animation = this.animations.last();
 	}
-	else
-	{
-		final_animation.onComplete = this.onGroupComplete;
-	}
-	final_animation.parent = this; // save reference for our onComplete callback;
+	final_animation.group_complete_callback = this.onGroupComplete;	// set our group complete callback.
 	this.animations.reset();
 
 }
@@ -81,6 +79,7 @@ Sim.AnimationGroup.prototype.start = function()
 	// if we are chained, we run one animation at a time.
 	if (this.isChain)
 	{
+		console.log("isChain is true. running next animation.");
 		var animation = this.animations.next();
 		if (animation == null)
 		{
@@ -94,7 +93,6 @@ Sim.AnimationGroup.prototype.start = function()
 	else
 	{
 		do {
-			console.log("AnimationGroup.start iteration...");
 			var animation = this.animations.next();
 			animation.start();
 		} while( this.animations.peek() != null );
@@ -113,7 +111,6 @@ Sim.AnimationGroup.prototype.stop = function()
 	} while( this.animations.peek() != null );
 	this.animations.reset();
 	console.log("AnimationGroup.stop");
-	//this.publish("complete");
 	this.onComplete();
 }
 
@@ -122,6 +119,14 @@ Sim.AnimationGroup.prototype.update = function()
 	if (!this.running)
 		return;
 
+	if (this.isChain)
+	{
+		console.log("Updating current animation.");
+		var animation = this.animations.current();
+		animation.update();
+		return;
+	}
+
 	do {
 		var animation = this.animations.next();
 		animation.update();
@@ -129,35 +134,39 @@ Sim.AnimationGroup.prototype.update = function()
 	this.animations.reset(); // reset back to beginning for next update call.
 }
 
-/* onComplete - Note this method will override all animations onComplete
- * so we can signify once when the entire group completes.
+/* onComplete - Note if a chain we move to the next animation by calling
+ * start(), we also set running to false so start() will actually start.
  *
  */
 Sim.AnimationGroup.prototype.onComplete = function()
 {
 	console.log("AnimationGroup.onComplete called.");
-	if (this.isChain)
+	if (this.isChain && this.running == true)
 	{
+		this.running = false;
 		// starts the next animation in our chain.
 		this.start();
-	} 
+		return;
+	}
+
 }
 
 Sim.AnimationGroup.prototype.onGroupComplete = function()
 {
 	console.log("AnimationGroup ONGROUPCOMPLETE complete.");
-	//this.publish("complete");
 	g_publisher.publish("complete");
 }
 
 /*
- * Base Animator Object
+ * Base Animator Object for wrapping any animation type 
+ *  Sim.KeyFrameAnimator and TweenjsAnimator inhert this.
  */
 Sim.Animator = function()
 {
 	Sim.Object.call();
 	this.running = false;
-	this.parent = null;
+	this.parent = null; // reference to the group animation if it exists.
+	this.group_complete_callback = null;
 }
 
 Sim.Animator.prototype = new Sim.Object();
@@ -192,12 +201,25 @@ Sim.Animator.prototype.update = function()
 /*
  * onComplete - sends out a message saying we are
  * complete. NOTE: if part of an animation group this
- * method is overwitten with the animation goup's onComplete!
+ * method will call the animation goup's onComplete instead.
  */
 Sim.Animator.prototype.onComplete = function()
 {
-	//this.publish.call(this.parent || this, "complete");
-	g_publisher.publish("complete");
+	if (this.on_complete_callback != null)
+	{
+		this.on_complete_callback.call(this.parent);
+		return;
+	}
+
+	if (this.on_group_complete_callback == null)
+	{
+		g_publisher.publish("complete");
+	}
+	else
+	{
+		console.log("This animation must signal group complete.");
+		this.on_group_complete_callback.call(this.parent);
+	}
 }
 
 // Statics
@@ -216,11 +238,9 @@ Sim.TweenjsAnimator.prototype.init = function(param)
 	param = param || {};
 	this.tweens =  param.tweens || [];
 	this.duration = param.duration || 2000;
-	var complete_cb = param.onComplete || this.onComplete;
-	// for signaling completion.
+	// for signaling completion. Add a completion tween to the end.
 	var complete = new TWEEN.Tween( this ).to({}, param.duration);
-	
-	complete.onComplete( complete_cb );
+	complete.onComplete( this.onComplete );
 	this.tweens.push(complete);
 
 }
@@ -234,20 +254,13 @@ Sim.TweenjsAnimator.prototype.start = function()
 	for (var i = 0; i < this.tweens.length; i++)
 	{
 		this.tweens[i].start();
-		console.log("Starting tween: " + i );
 	}
 	this.running = true;
 }	
 
 Sim.TweenjsAnimator.prototype.stop = function()
 {
-	for (var i = 0; i < this.tweens.length; i++)
-	{
-		this.tweens[i].stop();
-	}
-	this.running = false;
 	console.log("TweenjsAnimator.stop");
-	//this.publish("complete");
 	this.onComplete();
 }
 
@@ -257,14 +270,33 @@ Sim.TweenjsAnimator.prototype.update = function()
 		return;
 	
 	TWEEN.update();
-	//Sim.Animator.prototype.update.call(this);
-	console.log("I'm UPDATING!!!!");
 }
 
 Sim.TweenjsAnimator.prototype.onComplete = function()
 {
 	console.log("TweenjsAnimator onComplete called.");
-	this.publish.call(this.parent || this, "complete");
+	for (var i = 0; i < this.tweens.length; i++)
+	{
+		this.tweens[i].stop();
+	}
+	this.running = false;
+	TWEEN.removeAll();
+	// must call animation groups oncomplete if part of a group.
+	if ( this.on_complete_callback != null)
+	{
+		this.on_complete_callback.call(this.parent);
+	}
+	// must call animation groups ongroupcomplete if last animation in group.
+	if ( this.on_group_complete_callback == null )
+	{
+		g_publisher.publish("complete");
+	}
+	else
+	{
+		console.log("Tweenjs is final animation, signaling group complete.");
+		this.on_group_complete_callback.call(this.parent);
+	}
+	
 }
 
 // KeyFrameAnimator class
@@ -309,7 +341,7 @@ Sim.KeyFrameAnimator.prototype.start = function()
 {
 	if (this.running)
 		return;
-	
+	console.log("calling start in KeyFrameAnimator");
 	this.startTime = Date.now();
 	this.running = true;
 }

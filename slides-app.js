@@ -101,7 +101,7 @@ SlidesApp.prototype.previousSlide = function()
     console.log("SlidesApp.previousSlide");
     if ( this.slides.isBeginning() )
     {
-        //console.log("Already at beginning of slides!");
+        console.log("Already at beginning of slides!");
         return;
     }
     var slide = this.slides.current();
@@ -281,40 +281,6 @@ ObjectEffects.prototype.fadeOut = function( materials )
                          ],
                 target: materials
                 }];
-}
-
-/*
- * transform - Badly named, wrong location animation sequence using TWEEN.
- * 
- */
-ObjectEffects.prototype.transform = function( targets, duration, objects, render_callback )
-{
-    TWEEN.removeAll();
-
-    for ( var i = 0; i < objects.length; i ++ ) 
-    {
-
-        var object = objects[ i ];
-        var target = targets[ i ];
-
-        new TWEEN.Tween( object.position )
-            .to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
-
-        new TWEEN.Tween( object.rotation )
-            .to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
-
-    }
-
-    /*
-    new TWEEN.Tween( this )
-        .to( {}, duration * 2 )
-        .onUpdate( render_callback )
-        .start();
-        */
 }
 /*
  * glowEffectMaterial - Uses a custom shader to make a glowing effect. Requires the camera
@@ -534,7 +500,7 @@ SimpleSlide.prototype.previousAnimation = function()
     //console.log("PREVIOUS ANIMATION CALLED!");
 
     //this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
-    g_publisher.subscribe(animation, "complete", this, this.onAnomationComplete);
+    g_publisher.subscribe("complete", this, this.onAnimationComplete);
     console.log("previousAnimation index: " + this.animations.getIndex());
     this.runAnimation(animation);
     
@@ -624,8 +590,6 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
  */
 SimpleSlide.prototype.subscribeListeners = function()
 {
-    //this.subscribe("slide_previous", this, this.previousSlide);
-    //this.subscribe("slide_next", this, this.nextSlide);
     g_publisher.subscribe("slide_previous", this, this.previousSlide);
     g_publisher.subscribe("slide_next", this, this.nextSlide);
 }
@@ -638,11 +602,8 @@ SimpleSlide.prototype.subscribeListeners = function()
  */
 SimpleSlide.prototype.unsubscribeListeners = function()
 {
-
-    //this.unsubscribe("slide_previous", this);
-    //this.unsubscribe("slide_next", this);
     g_publisher.unsubscribe("slide_previous", this);
-    g_publisher.unsubcribe("slide_next", this);
+    g_publisher.unsubscribe("slide_next", this);
 }
 
 
