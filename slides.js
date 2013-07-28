@@ -51,7 +51,7 @@ IntroSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-slides.push(new IntroSlide());
+//slides.push(new IntroSlide());
 
 
 
@@ -161,7 +161,7 @@ MyBioSlide.prototype.update = function()
     this.engine.update( dt * 0.5 );  
     Sim.Object.prototype.update.call(this);
 }
-slides.push(new MyBioSlide());
+//slides.push(new MyBioSlide());
 
 
 // SLIDE #3
@@ -230,27 +230,6 @@ PBGamesSlide.prototype.init = function(App)
         this.targets.table.push( object );
     }
 
-    // Sphere.
-    /*
-    var vector = new THREE.Vector3();
-    for ( var i = 0, l = this.image_objects.length; i < l; i++) 
-    {
-        var phi = Math.acos( -1 + ( 2 * i ) / l );
-        var theta = Math.sqrt( l * Math.PI ) * phi;
-
-        var object = new THREE.Object3D();
-
-        object.position.x = 10 * Math.cos( theta ) * Math.sin( phi );
-        object.position.y = 10 * Math.sin( theta ) * Math.sin( phi );
-        object.position.z = 10 * Math.cos( phi );
-
-        vector.copy( object.position ).multiplyScalar( 2 );
-
-        object.lookAt( vector );
-        this.targets.sphere.push( object );
-
-    }
-    */
     this.setObject3D(this.root);
     this.initAnimations();
 }
@@ -294,7 +273,6 @@ PBGamesSlide.prototype.createFadeIn = function()
 PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
 {
 
-    TWEEN.removeAll();
     var tween_group = [];
     for ( var i = 0; i < objects.length; i ++ ) 
     {
@@ -329,38 +307,6 @@ PBGamesSlide.prototype.nextAnimation = function()
     SimpleSlide.prototype.nextAnimation.call(this)
 }
 
-/*
-PBGamesSlide.prototype.onAnimationComplete = function()
-{
-    this.animating = !this.animating; // reset our animation flag to false.
-    var animation = this.animations.current();
-    // really irritating, "complete" must be set in animations context, due to the animation calling publish("complete")
-    // but 'this' has to be set to our Slide.
-    //this.unsubscribe.call(animation, "complete", this);
-    g_publisher.unsubscribe("complete", this);
-    //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
-    if (this.animations.isBeginning())
-    {
-        console.log("BONK");
-        //ObjectEffects.prototype.transform( this.targets.table, 2000, this.image_objects, this.tweenRender );
-        //this.moveObjects(null, this.targets.table, this.image_objects, 2000);
-    }
-    if (this.animations.isEnd() && this.reloaded == false)
-    {
-        //console.log("all animations complete:" + this.name);
-        //console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
-        //this.publish("slide_next");
-        g_publisher.publish("slide_next");
-    }
-
-    if (this.reloaded == true)
-    {
-        //console.log("Resetting reloaded flag.");
-        this.reloaded = false;
-    }
-}
-*/
-
 PBGamesSlide.prototype.tweenRender = function ()
 {
     //this.app.renderer.render( this.app.scene, this.app.camera );
@@ -386,91 +332,90 @@ PunkBusterServicesSlide.prototype = new SimpleSlide();
 
 PunkBusterServicesSlide.prototype.init = function(App)
 {
+    this.root = new THREE.Object3D();
+
     SimpleSlide.prototype.init.call(this, App);
     this.materials = [];
-    this.root = new THREE.Object3D();
+
+    this.pnka_position = new THREE.Object3D();
+    this.pnka_position.position.set(-20, 220, 5);
+
+    this.pnkb_position = new THREE.Object3D();
+    this.pnkb_position.position.set(-20, 120, 5);
+    
+    this.pbcl_position = new THREE.Object3D();
+    this.pbcl_position.position.set(250, 120, 5);
+
+    this.root.add(this.pnka_position);
+    this.root.add(this.pnkb_position);
+    this.root.add(this.pbcl_position);
+    
     // bfp4f    
     var texture = THREE.ImageUtils.loadTexture("resources/BattlefieldPlay4Free_box.jpg");
     var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: texture, transparent: true, opacity: 0}); //
     this.materials.push(material);
     var geometry = new THREE.CubeGeometry(100,150,10);
-    var bfp4f = new THREE.Mesh(geometry, material);
-    bfp4f.position.set(250,220,5);
-    bfp4f.rotation.y =  Math.PI*1.68;
-    bfp4f.rotation.x = -0.01;
+    this.bfp4f = new THREE.Mesh(geometry, material);
+    this.bfp4f.position.set(250,220,5);
+    this.bfp4f.rotation.y =  Math.PI*1.68;
+    this.bfp4f.rotation.x = -0.01;
 
     // Note that the mesh is flagged to cast shadows
-    bfp4f.castShadow = true;
-    this.root.add(bfp4f);
+    this.bfp4f.castShadow = true;
+    this.root.add(this.bfp4f);
     
     this.app.renderer.shadowMapEnabled = true;
 
-    //spot light
-    // spotlight #1 -- yellow, dark shadow
-    var spotlight = new THREE.SpotLight(0xFFFFFF);
-    spotlight.position.set(-350,25,100);
-    spotlight.shadowCameraVisible = true;
-    spotlight.shadowDarkness = 0.15;
-    spotlight.intensity = 2;
-    // must enable shadow casting ability for the light
-    spotlight.castShadow = true;
-    this.root.add(spotlight);
-
-    // change the direction this spotlight is facing
-    var lightTarget = new THREE.Object3D();
-    lightTarget.position = bfp4f.position;
-    this.root.add(lightTarget);
-    spotlight.target = lightTarget;
     
-    var spotlight3 = new THREE.SpotLight(0x0000ff);
-    spotlight3.position.set(-250,250,-100);
-    spotlight3.shadowCameraVisible = true;
-    spotlight3.shadowDarkness = 0.95;
-    spotlight3.intensity = 2;
-    spotlight3.castShadow = true;
-    this.root.add(spotlight3);
-    var lightTarget = new THREE.Object3D();
-    lightTarget.position.set(0,0,5);
-    spotlight3.target = lightTarget;
-    this.root.add(lightTarget);
 
     // text objects
-    this.pbcl_text = this.create2dText("pbcl.dll", 120);
-    this.pbcl_text.position.set(0,60,0);
-    //this.root.add(this.pbcl_text);
+    this.pnkbstra_text = this.create2dText("PnkBstrA.exe", 20);
+    this.pnkbstra_text.position.set(this.pnka_position.position.x - 275,
+                                    this.pnka_position.position.y + 55,
+                                    this.pnka_position.position.z - 75);
+    
+    this.pnkbstra_text.material.opacity = 0;
+    this.materials.push(this.pnkbstra_text);
+    this.root.add(this.pnkbstra_text);
     
     // Gear Model
     var loader = new THREE.ColladaLoader();
     var that = this;
-    this.dae = new THREE.Object3D();
+    this.pba_gear = new THREE.Object3D();
+    this.pbb_gear = new THREE.Object3D();
+    this.pbcl_gear = new THREE.Object3D();
+
     loader.load.call(this, "resources/models/Gear-Handmade.dae", function ( collada ) {
 
                 that.dae = collada.scene;
                 skin = collada.skins[ 0 ];
 
                 that.dae.scale.x = that.dae.scale.y = that.dae.scale.z = 25;
-                that.dae.position.x = -1;
-                that.dae.position.y = 250;
-                that.dae.position.z = -50;
+                that.dae.position.x = 250;
+                that.dae.position.y = 220;
+                that.dae.position.z = 5;
                 // set the model to the center so we can rotate it properly.
                 that.dae.children[0].position.set(0,0,0); 
                 that.dae.updateMatrix();
-                that.dae.children[0].visible = false;
-                that.root.add(that.dae);
+                for (var i = 0; i < that.dae.children[0].material.materials.length; i++)
+                {
+                   that.dae.children[0].material.materials[i].transparent = true;
+                   that.dae.children[0].material.materials[i].opacity = 0;
+
+                }
+                //that.dae.children[0].opacity = 0;
+                that.pba_gear = new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+                that.pbb_gear = new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+                that.pbcl_gear = new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+                that.root.add(that.pba_gear);
+                that.root.add(that.pbb_gear);
+                that.root.add(that.pbcl_gear);
+                // must init our animations after model has loaded here.
+                that.initAnimations.call(that);
     });
 
     
-
-
-    /* GLOW EFFECT */
-    /*
-    var glowMaterial = ObjectEffects.prototype.glowEffectMaterial(this.app.camera);
-    this.glow = new THREE.Mesh( geometry.clone(), glowMaterial.clone() );
-    this.glow.position = bfp4f.position;//(bfp4f.position.x, bfp4f.position.y, bfp4f.position.z);
-    this.glow.rotation = bfp4f.rotation;
-    this.glow.scale.multiplyScalar(1.2);
-    this.root.add(this.glow);
-    */
+    this.createLighting();
 
     // FLOOR: mesh to receive shadows
     var floorTexture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
@@ -488,8 +433,47 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.root.add(floor);
    
     this.setObject3D(this.root);
-    this.initAnimations();
+    
 }
+
+PunkBusterServicesSlide.prototype.createLighting = function()
+{
+    //spot light
+    // spotlight #1 -- light up bfp4f box
+    var spotlight = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spotlight.position.set(-350,25,100);
+    this.root.add(spotlight);
+
+    // change the direction this spotlight is facing
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position = this.bfp4f.position;
+    this.root.add(lightTarget);
+    spotlight.target = lightTarget;
+    
+    // spot light 2 light up gears/text.
+    var gear_spotlight = ObjectEffects.prototype.createSpotlight(0xffffff);
+    gear_spotlight.position.set(350,25,100);
+    this.root.add(gear_spotlight);
+
+    // change the direction this spotlight is facing
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position = this.pnka_position.position;
+    this.root.add(lightTarget);
+    gear_spotlight.target = lightTarget;
+    
+
+    // blue light on checkerboard.
+    var blue_light = ObjectEffects.prototype.createSpotlight(0x0000ff);
+    blue_light.position.set(-250,250,-100);
+    this.root.add(blue_light);
+
+    // point it to the ground.
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,0,5);
+    blue_light.target = lightTarget;
+    this.root.add(lightTarget);
+}
+
 PunkBusterServicesSlide.prototype.runAnimation = function(animation)
 {
     this.app.camera.position.set(0,150,400);
@@ -504,12 +488,14 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     animatorIn.init({ 
         interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
-        duration: 5000
+        duration: 500
     });
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
 
-    var serviceAnimation = 
+    var serviceAnimation = this.buildPnkBstrAAnimations();
+    this.addChild(serviceAnimation);
+    this.animations.push(serviceAnimation);
 
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.name = "animatorIn";
@@ -522,14 +508,35 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
 }
-PunkBusterServicesSlide.prototype.buildServiceAnimations = function()
+PunkBusterServicesSlide.prototype.buildPnkBstrAAnimations = function()
 {
     var animation_group = new Sim.AnimationGroup;
     animation_group.name = "service_animation";
     
-    var gear_animation = new TweenjsAnimator();
-    animation_group.add();
+    var gear_fadein = new Sim.KeyFrameAnimator;
+    gear_fadein.init({
+        interps: ObjectEffects.prototype.fadeIn([this.pba_gear.children[0].material.materials[0],
+                                                 this.pba_gear.children[0].material.materials[1]]),
+        loop:false,
+        duration: 500
+    });
+    //this.addChild(gear_fadein);
+    animation_group.add(gear_fadein);
+    this.pnka_position.rotation.z = 10;
+    var gear_animation = ObjectEffects.prototype.tweenObjectToXrotateZ([this.pba_gear.children[0]],[this.pnka_position], 1000 );
+    //this.addChild(gear_animation);
+    animation_group.add(gear_animation);
 
+    var pnkbstra_text_visible = new Sim.KeyFrameAnimator;
+    pnkbstra_text_visible.init({
+        interps: ObjectEffects.prototype.makeVisible( this.pnkbstra_text.material ),
+        loop: false,
+        duration: 510
+    });
+
+    animation_group.add(pnkbstra_text_visible);
+    //this.addChild(gear_animation);
+    return animation_group;
 }
 PunkBusterServicesSlide.prototype.update = function()
 {
@@ -547,10 +554,48 @@ PunkBusterServicesSlide.prototype.nextAnimation = function()
     {
         for (var i = 0; i < this.materials.length; i++)
         {
-            this.materials[i].opacity = 0;
+            //this.materials[i].opacity = 0;
         }        
     }
     SimpleSlide.prototype.nextAnimation.call(this)
 }
 
 slides.push(new PunkBusterServicesSlide());
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Sphere.
+    /*
+    var vector = new THREE.Vector3();
+    for ( var i = 0, l = this.image_objects.length; i < l; i++) 
+    {
+        var phi = Math.acos( -1 + ( 2 * i ) / l );
+        var theta = Math.sqrt( l * Math.PI ) * phi;
+
+        var object = new THREE.Object3D();
+
+        object.position.x = 10 * Math.cos( theta ) * Math.sin( phi );
+        object.position.y = 10 * Math.sin( theta ) * Math.sin( phi );
+        object.position.z = 10 * Math.cos( phi );
+
+        vector.copy( object.position ).multiplyScalar( 2 );
+
+        object.lookAt( vector );
+        this.targets.sphere.push( object );
+
+    }
+    */

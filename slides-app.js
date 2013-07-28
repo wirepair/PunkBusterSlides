@@ -282,6 +282,26 @@ ObjectEffects.prototype.fadeOut = function( materials )
                 target: materials
                 }];
 }
+ObjectEffects.prototype.tweenObjectToXrotateZ = function ( objects, targets, duration )
+{
+    var tween_group = [];
+    for ( var i = 0; i < objects.length; i ++ ) 
+    {
+
+        var object = objects[ i ];
+        var target = targets[ i ];
+
+        tween_group.push(new TWEEN.Tween( object.position )
+            .to( { x: target.position.x }, duration )
+            .easing( TWEEN.Easing.Exponential.InOut ));
+        tween_group.push(new TWEEN.Tween( object.rotation )
+            .to( { z: target.rotation.z }, duration ))
+    }
+    var tweenjs = new Sim.TweenjsAnimator;
+    tweenjs.init({tweens: tween_group, duration: duration });
+    return tweenjs;
+}
+
 /*
  * glowEffectMaterial - Uses a custom shader to make a glowing effect. Requires the camera
  * Not sure why...
@@ -306,17 +326,27 @@ ObjectEffects.prototype.glowEffectMaterial = function (camera)
     });
     return customMaterial
 }
-
-
-ObjectEffects.prototype.rotateAroundObjectAxis = function(object, axis, radians) {
-    // new code for Three.js r50+
-    object.matrix.makeRotationZ(radians);
-
-    // old code for Three.js r49 and earlier:
-    // object.rotation.getRotationFromMatrix(object.matrix, object.scale);
+ObjectEffects.prototype.createSpotlight = function(color)
+{
+    var spotlight = new THREE.SpotLight(color);
+    spotlight.shadowCameraVisible = true;
+    spotlight.shadowDarkness = 0.15;
+    spotlight.intensity = 2;
+    // must enable shadow casting ability for the light
+    spotlight.castShadow = true;
+    return spotlight;
 }
 
-
+ObjectEffects.prototype.makeVisible = function( objects )
+{
+    return [{ 
+                keys:[0, 1], 
+                values:[ { opacity: 0},
+                         { opacity: 1} 
+                         ],
+                target: objects
+                }];
+}
 
 /* BASIC SLIDE OBJECT */
 SimpleSlide = function()
@@ -388,21 +418,34 @@ SimpleSlide.prototype.done = function()
 SimpleSlide.prototype.create2dText = function(the_text, size)
 {
     var size = size || 50;
-    var canvas1 = document.createElement('canvas');
-    var context1 = canvas1.getContext('2d');
-    context1.font = size + "px Arial";
-    context1.fillStyle = "rgba(0,127,127," + ( Math.random() * 0.5 + 0.25 ) + ");";
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    /*
+    context1.font = size + "px Times New Roman";
+    context1.fillStyle = "rgba(255,255,255,255);";// + ( Math.random() * 0.5 + 0.25 ) + ");";
     context1.fillText(the_text, 0, 50);
     
     // canvas contents will be used for a texture
-    var text_texture = new THREE.Texture(canvas1) 
+    */
+    var x = canvas.width / 2;
+    var y = canvas.height / 2 - 10;
+ 
+    context.font = '30pt Calibri';
+    context.textAlign = 'center';
+    context.fillStyle = 'white';
+    context.fillText(the_text, x, y);
+
+    //context.fillText('(' + width + 'px wide)', x, y + 40);
+    var text_texture = new THREE.Texture(canvas) 
     text_texture.needsUpdate = true;
       
     var material = new THREE.MeshBasicMaterial( {map: text_texture, side:THREE.DoubleSide } );
     material.transparent = true;
+    //material.wireframe = true;
     var mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(canvas1.width, canvas1.height), material);
-    mesh.rotation.x = -Math.PI / 20;
+        new THREE.PlaneGeometry(x, y), material);
+    //mesh.rotation.y = 0.1;
+    mesh.wireframe = true;
     return mesh;
 }
 

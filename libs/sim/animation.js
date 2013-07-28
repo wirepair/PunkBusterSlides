@@ -278,9 +278,10 @@ Sim.TweenjsAnimator.prototype.onComplete = function()
 	for (var i = 0; i < this.tweens.length; i++)
 	{
 		this.tweens[i].stop();
+		TWEEN.remove(this.tweens[i]);
 	}
 	this.running = false;
-	TWEEN.removeAll();
+	//TWEEN.removeAll();
 	// must call animation groups oncomplete if part of a group.
 	if ( this.on_complete_callback != null)
 	{
