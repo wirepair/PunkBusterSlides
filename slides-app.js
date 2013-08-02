@@ -282,7 +282,7 @@ ObjectEffects.prototype.fadeOut = function( materials )
                 target: materials
                 }];
 }
-ObjectEffects.prototype.tweenObjectToXrotateZ = function ( objects, targets, duration )
+ObjectEffects.prototype.tweenObjectToAxisRotateZ = function ( objects, targets, duration, axis )
 {
     var tween_group = [];
     for ( var i = 0; i < objects.length; i ++ ) 
@@ -290,10 +290,19 @@ ObjectEffects.prototype.tweenObjectToXrotateZ = function ( objects, targets, dur
 
         var object = objects[ i ];
         var target = targets[ i ];
+        if( axis == 'x')
+        {
+            tween_group.push(new TWEEN.Tween( object.position )
+                .to( { x: target.position.x }, duration )
+                .easing( TWEEN.Easing.Exponential.InOut ));
+        } 
+        else if ( axis == 'y')
+        {
+            tween_group.push(new TWEEN.Tween( object.position )
+                .to( { y: target.position.y }, duration )
+                .easing( TWEEN.Easing.Exponential.InOut ));
+        }
 
-        tween_group.push(new TWEEN.Tween( object.position )
-            .to( { x: target.position.x }, duration )
-            .easing( TWEEN.Easing.Exponential.InOut ));
         tween_group.push(new TWEEN.Tween( object.rotation )
             .to( { z: target.rotation.z }, duration ))
     }
@@ -329,7 +338,7 @@ ObjectEffects.prototype.glowEffectMaterial = function (camera)
 ObjectEffects.prototype.createSpotlight = function(color)
 {
     var spotlight = new THREE.SpotLight(color);
-    spotlight.shadowCameraVisible = true;
+    spotlight.shadowCameraVisible = false;
     spotlight.shadowDarkness = 0.15;
     spotlight.intensity = 2;
     // must enable shadow casting ability for the light
@@ -389,7 +398,7 @@ SimpleSlide.prototype.go = function()
     {
         this.object3D.visible = true;
     }
-    
+    console.log("go called.");
     this.animations.reset();
     // Register subscribers to our 'app'
     //this.subscribe("slide_next", this.app, this.app.slideComplete);
@@ -406,6 +415,7 @@ SimpleSlide.prototype.go = function()
  */
 SimpleSlide.prototype.done = function()
 {
+    console.log("done called");
     this.object3D.visible = false;
     this.unsubscribeListeners();
     this.setCamera();

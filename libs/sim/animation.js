@@ -58,7 +58,7 @@ Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 	{
 		final_animation = this.animations.last();
 	}
-	final_animation.group_complete_callback = this.onGroupComplete;	// set our group complete callback.
+	final_animation.on_group_complete_callback = this.onGroupComplete;	// set our group complete callback.
 	this.animations.reset();
 
 }
@@ -154,6 +154,8 @@ Sim.AnimationGroup.prototype.onComplete = function()
 Sim.AnimationGroup.prototype.onGroupComplete = function()
 {
 	console.log("AnimationGroup ONGROUPCOMPLETE complete.");
+	this.running = false;
+	this.animations.reset(); // reset so if we are recalled we are at beginning.
 	g_publisher.publish("complete");
 }
 

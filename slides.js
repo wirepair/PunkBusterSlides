@@ -51,7 +51,7 @@ IntroSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-//slides.push(new IntroSlide());
+slides.push(new IntroSlide());
 
 
 
@@ -104,7 +104,7 @@ MyBioSlide.prototype.init = function(App)
 MyBioSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
-    animatorIn.name = "animatorIn";
+    animatorIn.name = "MyBioSlideanimatorIn";
     animatorIn.init({ 
         interps: ObjectEffects.prototype.moveFloorIn(this.object3D),
         loop: false,
@@ -113,7 +113,7 @@ MyBioSlide.prototype.initAnimations = function()
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
     var animatorOut = new Sim.KeyFrameAnimator;
-    animatorOut.name = "animatorIn";
+    animatorOut.name = "MyBioSlideanimatorIn";
     animatorOut.init({ 
         interps: ObjectEffects.prototype.moveFloorOut(this.object3D),
         loop: false,
@@ -237,7 +237,7 @@ PBGamesSlide.prototype.init = function(App)
 PBGamesSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.AnimationGroup;
-    animatorIn.name = "animatorIn";
+    animatorIn.name = "PBGamesSlideanimatorIn";
     var fadeIn = this.createFadeIn();
     animatorIn.add(fadeIn);
     var moveObjects = this.moveObjects(this.targets.table, this.image_objects, 2000);
@@ -249,11 +249,11 @@ PBGamesSlide.prototype.initAnimations = function()
 
 
     var animatorOut = new Sim.KeyFrameAnimator;
-    animatorOut.name = "animatorOut";
+    animatorOut.name = "PBGamesSlideanimatorOut";
     animatorOut.init({ 
         interps: ObjectEffects.prototype.fadeOut(this.materials),
         loop: false,
-        duration: 1000
+        duration: 500
     });    
 
     this.addChild(animatorOut);
@@ -262,11 +262,11 @@ PBGamesSlide.prototype.initAnimations = function()
 PBGamesSlide.prototype.createFadeIn = function()
 {
     var fadeIn = new Sim.KeyFrameAnimator;
-    fadeIn.name = "animatorIn";
+    fadeIn.name = "PBGamesSlidefadeIn";
     fadeIn.init({ 
         interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
-        duration: 1500
+        duration: 500
     });
     return fadeIn;
 }
@@ -317,7 +317,7 @@ PBGamesSlide.prototype.update = function ()
     TWEEN.update();
     Sim.Object.prototype.update.call(this);
 }
-slides.push(new PBGamesSlide());
+//slides.push(new PBGamesSlide());
 
 
 
@@ -338,13 +338,13 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.materials = [];
 
     this.pnka_position = new THREE.Object3D();
-    this.pnka_position.position.set(-20, 220, 5);
+    this.pnka_position.position.set(-250, 220, 5);
 
     this.pnkb_position = new THREE.Object3D();
-    this.pnkb_position.position.set(-20, 120, 5);
+    this.pnkb_position.position.set(-250, 55, 5);
     
     this.pbcl_position = new THREE.Object3D();
-    this.pbcl_position.position.set(250, 120, 5);
+    this.pbcl_position.position.set(250, 55, 5);
 
     this.root.add(this.pnka_position);
     this.root.add(this.pnkb_position);
@@ -366,17 +366,15 @@ PunkBusterServicesSlide.prototype.init = function(App)
     
     this.app.renderer.shadowMapEnabled = true;
 
-    
-
-    // text objects
-    this.pnkbstra_text = this.create2dText("PnkBstrA.exe", 20);
-    this.pnkbstra_text.position.set(this.pnka_position.position.x - 275,
-                                    this.pnka_position.position.y + 55,
-                                    this.pnka_position.position.z - 75);
-    
-    this.pnkbstra_text.material.opacity = 0;
-    this.materials.push(this.pnkbstra_text);
+    this.pnkbstra_text = this.createTextObject("PnkBstrA.exe", this.pnka_position, 0, 55, 0);
     this.root.add(this.pnkbstra_text);
+   
+    this.pnkbstrb_text = this.createTextObject("PnkBstrB.exe", this.pnkb_position, 0, 55, 0); 
+    this.root.add(this.pnkbstrb_text);
+
+    this.pbcl_text = this.createTextObject("pbcl.dll", this.pbcl_position, 0, 55, 0);     
+    this.root.add(this.pbcl_text);
+
     
     // Gear Model
     var loader = new THREE.ColladaLoader();
@@ -386,27 +384,47 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.pbcl_gear = new THREE.Object3D();
 
     loader.load.call(this, "resources/models/Gear-Handmade.dae", function ( collada ) {
+                
 
                 that.dae = collada.scene;
                 skin = collada.skins[ 0 ];
 
-                that.dae.scale.x = that.dae.scale.y = that.dae.scale.z = 25;
                 that.dae.position.x = 250;
                 that.dae.position.y = 220;
                 that.dae.position.z = 5;
                 // set the model to the center so we can rotate it properly.
                 that.dae.children[0].position.set(0,0,0); 
                 that.dae.updateMatrix();
-                for (var i = 0; i < that.dae.children[0].material.materials.length; i++)
-                {
-                   that.dae.children[0].material.materials[i].transparent = true;
-                   that.dae.children[0].material.materials[i].opacity = 0;
+                var geometry = that.dae.children[ 0 ].geometry;
+                var material = that.dae.children[ 0 ].material;
 
+                // PnkBstrA gear
+                that.pba_gear = copyModel(geometry, material);
+                that.pba_gear.scale.x =  that.pba_gear.scale.y = that.pba_gear.scale.z = 25;
+                that.pba_gear.position.set(250, 220, 5);
+                
+
+                // PnkBstrB gear
+                that.pbb_gear = copyModel(geometry, material);
+                that.pbb_gear.scale.x =  that.pbb_gear.scale.y = that.pbb_gear.scale.z = 25;
+                that.pbb_gear.position.set(-250, 220, 5);
+
+                // pbcl.dll gear
+                that.pbcl_gear = copyModel(geometry, material);
+                that.pbcl_gear.scale.x =  that.pbcl_gear.scale.y = that.pbcl_gear.scale.z = 25;
+                that.pbcl_gear.position.set(250, 220, 5);                
+                
+                // set transparency for the gears.
+                for (var i = 0; i < that.pba_gear.material.materials.length; i++)
+                {
+                    that.pba_gear.material.materials[i].transparent = true;
+                    that.pba_gear.material.materials[i].opacity = 0;
+                    that.pbb_gear.material.materials[i].transparent = true;
+                    that.pbb_gear.material.materials[i].opacity = 0;
+                    that.pbcl_gear.material.materials[i].transparent = true;
+                    that.pbcl_gear.material.materials[i].opacity = 0;
                 }
-                //that.dae.children[0].opacity = 0;
-                that.pba_gear = new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
-                that.pbb_gear = new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
-                that.pbcl_gear = new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+
                 that.root.add(that.pba_gear);
                 that.root.add(that.pbb_gear);
                 that.root.add(that.pbcl_gear);
@@ -434,6 +452,19 @@ PunkBusterServicesSlide.prototype.init = function(App)
    
     this.setObject3D(this.root);
     
+}
+
+PunkBusterServicesSlide.prototype.createTextObject = function(text, position, x, y, z)
+{
+     // text objects
+    object = this.create2dText(text, 20);
+    object.position.set(position.position.x + x,
+                        position.position.y + y,
+                        position.position.z + z);
+    console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
+    object.material.opacity = 0;
+    this.materials.push(object);
+    return object;
 }
 
 PunkBusterServicesSlide.prototype.createLighting = function()
@@ -484,7 +515,7 @@ PunkBusterServicesSlide.prototype.runAnimation = function(animation)
 PunkBusterServicesSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
-    animatorIn.name = "animatorIn";
+    animatorIn.name = "PunkBusterServicesSlideanimatorIn";
     animatorIn.init({ 
         interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
@@ -493,12 +524,23 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
 
-    var serviceAnimation = this.buildPnkBstrAAnimations();
-    this.addChild(serviceAnimation);
-    this.animations.push(serviceAnimation);
+    // PnkBstrA
+    var pnka_animation = this.buildAnimationGroup(this.pba_gear, this.pnkbstra_text.material, "PnkBstrA_animation", this.pnka_position);
+    this.addChild(pnka_animation);
+    this.animations.push(pnka_animation);
+
+    // PnkBstrB
+    var pnkb_animation = this.buildAnimationGroup(this.pbb_gear, this.pnkbstrb_text.material, "PnkBstrB_animation", this.pnkb_position);
+    this.addChild(pnkb_animation);
+    this.animations.push(pnkb_animation);
+
+    // pbcl.dll
+    var pbcl_animation = this.buildAnimationGroup(this.pbcl_gear, this.pbcl_text.material, "pbcl_animation", this.pbcl_position);
+    this.addChild(pbcl_animation);
+    this.animations.push(pbcl_animation);
 
     var animatorOut = new Sim.KeyFrameAnimator;
-    animatorOut.name = "animatorIn";
+    animatorOut.name = "PunkBusterServicesSlideanimatorOut";
     animatorOut.init({ 
         interps: ObjectEffects.prototype.fadeOut(this.materials),
         loop: false,
@@ -508,43 +550,49 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
 }
-PunkBusterServicesSlide.prototype.buildPnkBstrAAnimations = function()
+
+PunkBusterServicesSlide.prototype.buildAnimationGroup = function(model, text_material, name, position)
 {
     var animation_group = new Sim.AnimationGroup;
-    animation_group.name = "service_animation";
+    animation_group.name = name;
     
     var gear_fadein = new Sim.KeyFrameAnimator;
     gear_fadein.init({
-        interps: ObjectEffects.prototype.fadeIn([this.pba_gear.children[0].material.materials[0],
-                                                 this.pba_gear.children[0].material.materials[1]]),
+        interps: ObjectEffects.prototype.fadeIn([model.material.materials[0],model.material.materials[1]]),
         loop:false,
         duration: 500
     });
     //this.addChild(gear_fadein);
     animation_group.add(gear_fadein);
-    this.pnka_position.rotation.z = 10;
-    var gear_animation = ObjectEffects.prototype.tweenObjectToXrotateZ([this.pba_gear.children[0]],[this.pnka_position], 1000 );
-    //this.addChild(gear_animation);
-    animation_group.add(gear_animation);
+    position.rotation.z = 10;
+    if (name == 'PnkBstrA_animation')
+    {
+        var gear_animation = ObjectEffects.prototype.tweenObjectToAxisRotateZ([model],[position], 1000, 'x' );
+        //this.addChild(gear_animation);
+        animation_group.add(gear_animation);        
+    }
+    else
+    {
+        console.log("object " + name + " at " + model.position.y + " target " + position.position.y);
+        var gear_animation = ObjectEffects.prototype.tweenObjectToAxisRotateZ([model],[position], 1000, 'y' );
+        //this.addChild(gear_animation);
+        animation_group.add(gear_animation);   
+    }
 
-    var pnkbstra_text_visible = new Sim.KeyFrameAnimator;
-    pnkbstra_text_visible.init({
-        interps: ObjectEffects.prototype.makeVisible( this.pnkbstra_text.material ),
+    var text_visible = new Sim.KeyFrameAnimator;
+    text_visible.init({
+        interps: ObjectEffects.prototype.makeVisible( text_material ),
         loop: false,
         duration: 510
     });
 
-    animation_group.add(pnkbstra_text_visible);
+    animation_group.add(text_visible);
     //this.addChild(gear_animation);
     return animation_group;
 }
+
 PunkBusterServicesSlide.prototype.update = function()
 {
-    //if (this.dae.children[0] != undefined)
-    //    this.dae.children[0].rotation.z += 0.01;
-    //this.dae.rotation.z += 0.1;
-    //if (this.dae.children[0])
-    //this.dae.children[0].visible = false;
     Sim.Object.prototype.update.call(this);
 }
 PunkBusterServicesSlide.prototype.nextAnimation = function()
@@ -572,7 +620,47 @@ slides.push(new PunkBusterServicesSlide());
 
 
 
+/*
 
+    loader.load.call(this, "resources/models/Gear-Handmade.dae", function ( collada ) {
+
+                that.dae = collada.scene;
+                skin = collada.skins[ 0 ];
+
+                that.dae.scale.x = that.dae.scale.y = that.dae.scale.z = 25;
+                that.dae.position.x = 250;
+                that.dae.position.y = 220;
+                that.dae.position.z = 5;
+                // set the model to the center so we can rotate it properly.
+                that.dae.children[0].position.set(0,0,0); 
+                that.dae.updateMatrix();
+                 //that.dae.children[0].opacity = 0;
+                that.pba_gear = that.dae.clone(); //new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+                that.pbb_gear = that.dae.clone(); //new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+                
+                that.pbb_gear.position.set(-250, 220, 5);
+
+                that.pbcl_gear = that.dae.clone();//new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
+
+                for (var i = 0; i < that.dae.children[0].material.materials.length; i++)
+                {
+                   that.dae.children[0].material.materials[i].transparent = true;
+                   that.dae.children[0].material.materials[i].opacity = 0;
+                   // clone materials too
+                   that.pba_gear.children[0].material.materials[i] = that.dae.children[0].material.materials[i].clone();
+                   that.pbb_gear.children[0].material.materials[i] = that.dae.children[0].material.materials[i].clone();
+                   that.pbcl_gear.children[0].material.materials[i] = that.dae.children[0].material.materials[i].clone();
+
+                }
+               
+                that.root.add(that.pba_gear);
+                that.root.add(that.pbb_gear);
+                that.root.add(that.pbcl_gear);
+                // must init our animations after model has loaded here.
+                that.initAnimations.call(that);
+    });
+
+*/
 
 
 
