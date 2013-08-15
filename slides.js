@@ -55,7 +55,7 @@ IntroSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-//slides.push(new IntroSlide());
+
 
 
 
@@ -176,7 +176,6 @@ MyBioSlide.prototype.done = function()
     this.engine = null;
     SimpleSlide.prototype.done.call(this);
 }
-//slides.push(new MyBioSlide());
 
 
 // SLIDE #3
@@ -328,7 +327,7 @@ PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
     return tweenjs;
 }
 
-//slides.push(new PBGamesSlide());
+//
 
 
 
@@ -387,6 +386,7 @@ PunkBusterServicesSlide.prototype.init = function(App)
     // GEARS
 
     // PnkBstrA gear
+    
     this.pba_gear = copyModel(this.gear_geometry, this.gear_material);
     this.pba_gear.scale.x =  this.pba_gear.scale.y = this.pba_gear.scale.z = 25;
     this.pba_gear.position.set(250, 220, 5);
@@ -412,7 +412,7 @@ PunkBusterServicesSlide.prototype.init = function(App)
         this.pbcl_gear.material.materials[i].transparent = true;
         this.pbcl_gear.material.materials[i].opacity = 0;
     }
-
+    
     this.root.add(this.pba_gear);
     this.root.add(this.pbb_gear);
     this.root.add(this.pbcl_gear);
@@ -535,7 +535,7 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     });
     this.addChild(animatorIn); 
     this.animations.push(animatorIn);
-
+    
     // PnkBstrA
     var pnka_animation = this.buildAnimationGroup(this.pba_gear, this.pnkbstra_text.material, "PnkBstrA_animation", this.pnka_position);
     this.addChild(pnka_animation);
@@ -550,11 +550,12 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     var pbcl_animation = this.buildAnimationGroup(this.pbcl_gear, this.pbcl_text.material, "pbcl_animation", this.pbcl_position);
     this.addChild(pbcl_animation);
     this.animations.push(pbcl_animation);
-
+    
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.name = "PunkBusterServicesSlideanimatorOut";
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        //interps: ObjectEffects.prototype.fadeOut(this.materials),
+        interps: ObjectEffects.prototype.moveFloorOut(this.root),
         loop: false,
         duration: 500
     });    
@@ -574,20 +575,20 @@ PunkBusterServicesSlide.prototype.buildAnimationGroup = function(model, text_mat
         loop:false,
         duration: 500
     });
-    //this.addChild(gear_fadein);
+    this.addChild(gear_fadein);
     animation_group.add(gear_fadein);
     position.rotation.z = 10;
     if (name == 'PnkBstrA_animation')
     {
         var gear_animation = ObjectEffects.prototype.tweenObjectToAxisRotateZ([model],[position], 1000, 'x' );
-        //this.addChild(gear_animation);
+        this.addChild(gear_animation);
         animation_group.add(gear_animation);        
     }
     else
     {
         console.log("object " + name + " at " + model.position.y + " target " + position.position.y);
         var gear_animation = ObjectEffects.prototype.tweenObjectToAxisRotateZ([model],[position], 1000, 'y' );
-        //this.addChild(gear_animation);
+        this.addChild(gear_animation);
         animation_group.add(gear_animation);   
     }
 
@@ -599,10 +600,10 @@ PunkBusterServicesSlide.prototype.buildAnimationGroup = function(model, text_mat
     });
 
     animation_group.add(text_visible);
-    //this.addChild(gear_animation);
+    this.addChild(text_visible);
     return animation_group;
 }
-//slides.push(new PunkBusterServicesSlide());
+
 
 
 
@@ -618,7 +619,7 @@ PnkBstrASlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
 
-    this.floor = this.createWireframeFloor();
+    this.floor = this.createWireframeFloor(0xff80ff);
     this.floor.position.set(0,20,-400); // move floor a bit back.
     this.root.add(this.floor);
     
@@ -642,7 +643,7 @@ PnkBstrASlide.prototype.init = function(App)
     this.cmd_text = this.createTextObject("- Accepts commands from pbcl.dll", this.bullets_position, 0, -75, 0);
     this.root.add(this.cmd_text);
 
-    this.delete_text = this.createTextObject("- Deletes PnkBstrB service on unload.", this.bullets_position, 0, -100, 0);
+    this.delete_text = this.createTextObject("- Deletes PnkBstrB service on game exit", this.bullets_position, 0, -100, 0);
     this.root.add(this.delete_text);
 
     var s_geometry = new THREE.PlaneGeometry(400, 150);
@@ -726,12 +727,13 @@ PnkBstrASlide.prototype.initAnimations = function()
 
 PnkBstrASlide.prototype.runAnimation = function(animation)
 {
-    this.app.camera.position.set(0,150,400);
+    this.app.camera.position.set(0,150,450);
     this.animating = !this.animating; // set animating to true.
     this.animate(animation, this.animating);
 }
 
-//slides.push(new PnkBstrASlide());
+//
+
 
 
 
@@ -750,17 +752,25 @@ FnkBstrASlide.prototype.init = function(App)
     
     parameters = { color: 0xffffff, envMap: this.textureCube, shading: THREE.FlatShading };
     cubeMaterial = new THREE.MeshBasicMaterial( parameters );
-    //this.materials.push(cubeMaterial)
+    this.materials.push(cubeMaterial)
 
     var geo = new THREE.SphereGeometry( 50, 50, 50);
     this.discoball_mesh = new THREE.Mesh( geo, cubeMaterial );
-    this.discoball_mesh.position.set(0, 250, 0);
+    this.discoball_mesh.position.set(0, 300, 0);
     this.root.add(this.discoball_mesh);
     
- 
+    //FnkBstrMan
+    var funk_geometry = new THREE.PlaneGeometry(75, 200);
+    var funk_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fnkbstrman, transparent: true } );
+    this.materials.push(funk_material);
+    this.funk_mesh = new THREE.Mesh( funk_geometry, funk_material ); 
+    this.funk_mesh.position.y = 100;
+    this.funk_mesh.position.z = 5;
+    this.root.add(this.funk_mesh);
     // LIGHTS
-    //this.createLighting();
+    this.createLighting();
     this.createFakeLights();
+
     // FLOOR: mesh to receive shadows
     
     this.floorTexture.wrapS = this.floorTexture.wrapT = THREE.RepeatWrapping; 
@@ -773,8 +783,8 @@ FnkBstrASlide.prototype.init = function(App)
     floor.position.y = -0.5;
     floor.rotation.x = Math.PI / 2;
     // Note the mesh is flagged to receive shadows
-    floor.receiveShadow = true;
-    //this.root.add(floor);
+    //floor.receiveShadow = true;
+    this.root.add(floor);
 
     // Tell the framework about our object
     this.setObject3D(this.root);
@@ -783,14 +793,15 @@ FnkBstrASlide.prototype.init = function(App)
 
 FnkBstrASlide.prototype.loadResources = function()
 {
-    this.floorTexture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
+    this.floorTexture = new THREE.ImageUtils.loadTexture( 'resources/disco_floor.png' );
+    this.fnkbstrman = new THREE.ImageUtils.loadTexture('resources/fnkbstrman2.png');
     this.textureCube = THREE.ImageUtils.loadTextureCube( ["resources/disco/disco000.png","resources/disco/disco002.png","resources/disco/disco003.png","resources/disco/disco008.png","resources/disco/disco005.png","resources/disco/disco006.png"] );
 }
 
 FnkBstrASlide.prototype.createLighting = function()
 {
     
-    this.lights = [];
+    this.spotlights = [];
     for (var i = 0; i < 20; i++)
     {
         var color = getRandomColor();
@@ -805,8 +816,16 @@ FnkBstrASlide.prototype.createLighting = function()
         console.log("target: " + light.target.position.x + " " + light.target.position.y  + " " + light.target.position.z );
         
         this.root.add(light);
-        this.lights.push(light);
+        this.spotlights.push(light);
     }
+    this.top_light = ObjectEffects.prototype.createSpotlight(0xffffff);
+    this.top_light.position.set(0, 600, 0);
+    this.top_light.intensity = 0.5;
+    this.top_light.exponent = 0;
+    this.top_light.target.position.x = 0;
+    this.top_light.target.position.y = 0;
+    this.root.add(this.top_light);
+       
 }
 FnkBstrASlide.prototype.createFakeLights = function()
 {
@@ -819,48 +838,17 @@ FnkBstrASlide.prototype.createFakeLights = function()
     this.group = new THREE.Object3D();
 
 
-    var geo = new THREE.SphereGeometry( 70, 32, 8 ); // Extra geometry to be broken down for MeshFaceMaterial
-    var parameters = { color: 0xf0ff0f };
-    cubeMaterial = new THREE.MeshBasicMaterial( parameters );
-    this.lights = new THREE.Mesh(geo, cubeMaterial);
+    var geo = new THREE.SphereGeometry( 1300, 40, 20 ); // Extra geometry to be broken down for MeshFaceMaterial
+    var parameters = { color: 0x000000 };
+    var cubeMaterial = new THREE.ParticleBasicMaterial( { size: 10, color: 0xffffff } );
+   
+    this.lights_color = [128, 5, 128];
+    this.lights = new THREE.ParticleSystem(geo, cubeMaterial);
+    this.lights.position.y = 150;
+    this.lights.position.z = -25;
+    this.lights.rotation.x = 0.1;
     this.root.add(this.lights);
-    /*
-    this.parameters = [
-                    [ [1, 1, 0.5], 5 ],
-                    [ [0.95, 1, 0.5], 4 ],
-                    [ [0.90, 1, 0.5], 3 ],
-                    [ [0.85, 1, 0.5], 2 ],
-                    [ [0.80, 1, 0.5], 1 ]
-                ];
-    for ( var i = 0; i < 200; i ++ ) 
-    {
-
-        var vertex = new THREE.Vector3();
-        vertex.x = getRandomInt(-250, 250);
-        vertex.y = getRandomInt(10, 250);
-        vertex.z = getRandomInt(-250, -500);
-
-        this.geometry.vertices.push( vertex );
-
-    }
-    
-
-    for ( var i = 0; i < this.parameters.length; i ++ ) {
-
-        this.color = this.parameters[i][0];
-        size  = this.parameters[i][1];
-
-        this.particle_materials[i] = new THREE.ParticleBasicMaterial( { size: size } );
-
-        var particle = new THREE.ParticleSystem( this.geometry, this.particle_materials[i] );
-
-        particle.rotation.x = Math.random() * 6;
-        particle.rotation.y = Math.random() * 6;
-        particle.rotation.z = Math.random() * 6;
-        this.particles.push(particle);
-        this.root.add(particle);
-    }
-    */
+   
 }
 
 FnkBstrASlide.prototype.initAnimations = function()
@@ -889,7 +877,7 @@ FnkBstrASlide.prototype.initAnimations = function()
 
 FnkBstrASlide.prototype.runAnimation = function(animation)
 {
-    this.app.camera.position.set(0,150,1000);
+    this.app.camera.position.set(0,150,500);
     this.animating = !this.animating; // set animating to true.
     this.animate(animation, this.animating);
 }
@@ -898,43 +886,276 @@ FnkBstrASlide.prototype.runAnimation = function(animation)
 FnkBstrASlide.prototype.update = function()
 {
     Sim.Object.prototype.update.call(this);
-    var timer = 0.0005 * Date.now();   
+    var timer = 0.0001 * Date.now();   
     if (this.discoball_mesh != null)
     {
-        this.discoball_mesh.rotation.y += 0.001;
+        this.discoball_mesh.rotation.y -= 0.001;
     }
-    /*
+
     if (this.lights)
     {
-        for (var i = 0; i < this.lights.length; i++)
-        {
-            this.lights[i].target.position.x = Math.cos(timer) * 25 * i;
-            this.lights[i].target.position.z = Math.sin(timer) * 25 * i;
-            //this.lights[i].exponent = 1 / i;
-        }
-    }*/
-    
-    if (this.particles)
-    {
-        
-        /*
-        for (var i = 0; i < this.particles.length; i++)
-        {
-            this.particles[i].rotation.z = timer * ( i < 4 ? i + 1 : - ( i + 1 ) );
-        }
-
-        for (var i = 0; i < this.particle_materials.length; i ++ ) 
-        {
-            this.color = this.parameters[i][0];
-
-            this.h = ( 360 * ( this.color[0] + timer ) % 360 ) / 360;
-            this.particle_materials[i].color.setHSL( this.h, this.color[1], this.color[2] );
-        }
-        */
+        this.lights.rotation.y -= 0.003;
+        var h = ( 360 * ( this.lights_color[0] + timer ) % 360 ) / 360;
+        this.lights.material.color.setHSL( h, 1, 0.5 );
     }
-    
+    if (this.spotlights)
+    {
+        for (var i = 0; i < this.spotlights.length; i++)
+        {
+            this.spotlights[i].target.position.x = Math.cos(timer/5 * 5 * i) * 25 * i;
+            this.spotlights[i].target.position.z = Math.sin(timer/5 * 5 * i) * 25 * i;
+        }
+    }
+
 }
+//
+
+/******************/
+/* PNKBSTRB Slide */
+/******************/
+PnkBstrBSlide = function()
+{
+    this.name = "PnkBstrBSlide";
+    SimpleSlide.call(this);
+}
+
+PnkBstrBSlide.prototype = new SimpleSlide();
+
+PnkBstrBSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    this.floor = this.createWireframeFloor(0x81BEF7);
+    this.floor.position.set(0,20,-400); // move floor a bit back.
+    this.root.add(this.floor);
+    
+    this.heading_position = new THREE.Object3D();
+    this.heading_position.position.set(0,290,0);
+    this.heading_text = this.createHeading("PnkBstrB Service", this.heading_position);
+    this.root.add(this.heading_text);
+    
+    this.bullets_position = new THREE.Object3D();
+    this.bullets_position.position.set(-280, 240, 0);
+
+    this.purpose_text = this.createTextObject("- Scans processes, memory, hard drive IDs, adapter addresses", this.bullets_position, 0,0,0);
+    this.root.add(this.purpose_text);
+
+    this.re_text = this.createTextObject("- Contains anti-RE'ing techniques", this.bullets_position, 0, -25, 0);
+    this.root.add(this.re_text);
+
+    this.listens_text = this.createTextObject("- Listens on 127.0.0.1:45301", this.bullets_position, 0, -50, 0);
+    this.root.add(this.listens_text);
+
+    this.cmd_text = this.createTextObject("- Has ~30 commands", this.bullets_position, 0, -75, 0);
+    this.root.add(this.cmd_text);
+
+    this.pbcl_text = this.createTextObject("- Listens for commands from pbcl.dll", this.bullets_position, 0, -100, 0);
+    this.root.add(this.pbcl_text);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+PnkBstrBSlide.prototype.loadResources = function()
+{
+
+}
+
+PnkBstrBSlide.prototype.createHeading = function(text, position)
+{
+    object = this.create2dText(text, 40, 400, 100, 'center');
+    object.position.set(position.position.x,
+                        position.position.y,
+                        position.position.z);
+    console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
+    object.material.opacity = 0;
+    this.materials.push(object.material);
+    return object;
+}
+PnkBstrBSlide.prototype.createTextObject = function(text, position, x, y, z)
+{
+     // text objects
+    object = this.create2dText(text, 20, 1350, 50, 'left');
+    object.position.set(position.position.x + x,
+                        position.position.y + y,
+                        position.position.z + z);
+    console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
+    object.material.opacity = 0;
+    this.materials.push(object.material);
+
+    return object;
+}
+
+PnkBstrBSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+PnkBstrBSlide.prototype.runAnimation = function(animation)
+{
+    this.app.camera.position.set(0,150,450);
+    this.animating = !this.animating; // set animating to true.
+    this.animate(animation, this.animating);
+}
+
+
+
+
+AntiRESlide = function()
+{
+    this.name = "AntiRESlide";
+    SimpleSlide.call(this);
+}
+
+AntiRESlide.prototype = new SimpleSlide();
+
+AntiRESlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    
+    var xor_geometry = new THREE.PlaneGeometry(170, 150);
+    var xor_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true } );
+    this.materials.push(xor_material);
+    this.xor_mesh = new THREE.Mesh( xor_geometry, xor_material ); 
+    this.xor_mesh.position.y = 150;
+    this.xor_mesh.position.z = 5;
+    //this.root.add(this.xor_mesh);
+
+    // PIN model
+    this.pin = new THREE.Mesh(this.pin_geometry, this.pin_material);
+    this.pin.scale.x = 20; 
+    this.pin.scale.y = 20;
+    this.pin.scale.z = 0.15;
+    this.pin.rotation.y = 0.1;
+    this.pin.rotation.z = 1;
+    this.pin.rotation.x = 1;
+    this.pin.position.set(0, 15, 0);                
+
+    this.createLighting();
+    
+    this.root.add(this.pin);
+
+    // FLOOR: mesh to receive shadows
+    
+    this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
+    this.floor_texture.repeat.set( 10, 10 );
+    // Note the change to Lambert material.
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
+    this.materials.push(floorMaterial);
+    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.y = -0.5;
+    floor.rotation.x = Math.PI / 2;
+    // Note the mesh is flagged to receive shadows
+    floor.receiveShadow = true;
+    this.root.add(floor);
+
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+AntiRESlide.prototype.loadResources = function()
+{
+    this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
+    this.xor_texture = new THREE.ImageUtils.loadTexture("resources/sleep_xor.png");
+    // Gear Model
+    var loader = new THREE.ColladaLoader();
+    var that = this;
+    this.pin = new THREE.Object3D();
+    var that = this;
+    loader.load("resources/models/pin.dae", function ( collada ) {
+        that.dae = collada.scene;
+        skin = collada.skins[ 0 ];
+
+        //that.dae.position.x = 250;
+        //that.dae.position.y = 220;
+        //that.dae.position.z = 5;
+        // set the model to the center so we can rotate it properly.
+        //that.dae.children[0].position.set(0,0,0); 
+        that.dae.updateMatrix();
+        that.pin_geometry = that.dae.children[ 0 ].geometry;
+        that.pin_material = that.dae.children[ 0 ].material;        
+    });
+}
+
+AntiRESlide.prototype.createLighting = function()
+{
+    var spot_light = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light.position.set(-250,350,-100);
+    this.root.add(spot_light);
+
+    var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light2.position.set(250,350,-100);
+    this.root.add(spot_light2);
+    // point it to the ground.
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,0,5);
+    spot_light.target = lightTarget;
+    spot_light2.target = lightTarget;
+}
+
+AntiRESlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+AntiRESlide.prototype.runAnimation = function(animation)
+{
+    this.app.camera.position.set(0,150,450);
+    this.animating = !this.animating; // set animating to true.
+    this.animate(animation, this.animating);
+}
+
+slides.push(new IntroSlide());
+slides.push(new MyBioSlide());
+slides.push(new PBGamesSlide());
+slides.push(new PunkBusterServicesSlide());
+slides.push(new PnkBstrASlide());
 slides.push(new FnkBstrASlide());
+slides.push(new PnkBstrBSlide());
+slides.push(new AntiRESlide());
 
 /*
 

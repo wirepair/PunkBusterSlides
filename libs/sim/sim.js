@@ -155,6 +155,15 @@ Sim.App.prototype.update = function()
 	}
 }
 
+// remove all objects, recreate root scene object.
+Sim.App.prototype.reset = function()
+{
+	this.scene.remove(this.root);
+	this.objects = [];
+	this.root = new THREE.Object3D();
+	this.scene.add(this.root);
+}
+
 // Add/remove objects
 Sim.App.prototype.addObject = function(obj)
 {

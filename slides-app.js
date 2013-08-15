@@ -38,7 +38,6 @@ SlidesApp.prototype.registerSlides = function(slides)
     do {
         var slide = this.slides.next();
         slide.loadResources();
-        //slide.init(this);
     } while ( this.slides.peek()  != null)
     this.slides.reset();
     this.nextSlide();
@@ -225,8 +224,10 @@ SimpleSlide.prototype.go = function()
 SimpleSlide.prototype.done = function()
 {
     console.log("done called");
-    this.object3D.visible = false;
     this.root.visible = false;
+    this.app.objects = [];
+    this.app.reset();
+
     // delete old references.
     //this.object3D = null;
     this.root = null;
@@ -269,10 +270,11 @@ SimpleSlide.prototype.create2dText = function(the_text, size, width, height, ali
 
     return mesh;
 }
-SimpleSlide.prototype.createWireframeFloor = function()
+SimpleSlide.prototype.createWireframeFloor = function(color)
 {
+    var color = color || 0xffffff
     var geometry = new THREE.Geometry();
-    var material = new THREE.LineBasicMaterial( { color: 0xff80ff, transparent: true } );
+    var material = new THREE.LineBasicMaterial( { color: color, transparent: true } );
     var size = 1000, step = 100;
     for ( var i = - size; i <= size; i += step ) {
 
