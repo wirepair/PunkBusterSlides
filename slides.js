@@ -16,11 +16,9 @@ IntroSlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
 
     this.root = new THREE.Object3D();
-    var mohawk = "resources/isaac.mohawk.png";
     var geometry = new THREE.PlaneGeometry(3.337, 3);
-    var texture = THREE.ImageUtils.loadTexture(mohawk);
 
-    this.material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture, transparent: true } );
+    this.material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.texture, transparent: true } );
     var mesh = new THREE.Mesh( geometry, this.material ); 
     this.root.add(mesh);
     // Tell the framework about our object
@@ -28,12 +26,18 @@ IntroSlide.prototype.init = function(App)
     this.initAnimations();
 }
 
+
+IntroSlide.prototype.loadResources = function()
+{
+    this.texture = THREE.ImageUtils.loadTexture("resources/isaac.mohawk.png");
+}
+
 IntroSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
     console.log(this.object3D);
     animatorIn.init({ 
-        interps: ObjectEffects.prototype.rotateIn(this.object3D),
+        interps: ObjectEffects.prototype.fadeIn(this.material),
         loop: false,
         duration: 500
     });
@@ -42,7 +46,7 @@ IntroSlide.prototype.initAnimations = function()
     this.animations.push(animatorIn);
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.rotateOut(this.object3D),
+        interps: ObjectEffects.prototype.fadeOut(this.material),
         loop: false,
         duration: 500
     });    
@@ -51,7 +55,7 @@ IntroSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-slides.push(new IntroSlide());
+//slides.push(new IntroSlide());
 
 
 
@@ -67,15 +71,14 @@ MyBioSlide.prototype = new SimpleSlide();
 MyBioSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
-    this.root = new THREE.Object3D();
     this.root.position.z = -100;
     this.engine = new ParticleEngine(this.root);
     this.createParticles();
     this.clock = new THREE.Clock();
-    var seppuku = "resources/seppuku.jpg";
+    
     var s_geometry = new THREE.PlaneGeometry(1, 1.5);
-    var s_texture = THREE.ImageUtils.loadTexture(seppuku);
-    var s_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: s_texture } );
+    
+    var s_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.s_texture } );
     var s_mesh = new THREE.Mesh( s_geometry, s_material ); 
     s_mesh.position.y = 0.98;
     var geometry = new THREE.Geometry();
@@ -99,6 +102,12 @@ MyBioSlide.prototype.init = function(App)
     // Tell the framework about our object
     this.setObject3D(this.root);
     this.initAnimations();
+}
+
+MyBioSlide.prototype.loadResources = function()
+{
+    this.s_texture = THREE.ImageUtils.loadTexture("resources/seppuku.jpg");
+    this.particle_texture = THREE.ImageUtils.loadTexture( 'resources/sakura6.png' );
 }
 
 MyBioSlide.prototype.initAnimations = function()
@@ -141,7 +150,7 @@ MyBioSlide.prototype.createParticles = function()
         angleVelocityBase       :  0,
         angleVelocitySpread     : 20,
         
-        particleTexture : THREE.ImageUtils.loadTexture( 'resources/sakura6.png' ),
+        particleTexture : this.particle_texture,
             
         sizeTween    : new Tween( [0, 0.25], [10, 15] ),
         colorBase   : new THREE.Vector3(0.66, 1.0, 0.9), // H,S,L
@@ -160,6 +169,12 @@ MyBioSlide.prototype.update = function()
     var dt = this.clock.getDelta();
     this.engine.update( dt * 0.5 );  
     Sim.Object.prototype.update.call(this);
+}
+MyBioSlide.prototype.done = function()
+{
+    this.engine.destroy();
+    this.engine = null;
+    SimpleSlide.prototype.done.call(this);
 }
 //slides.push(new MyBioSlide());
 
@@ -180,7 +195,38 @@ PBGamesSlide.prototype.init = function(App)
     this.camera_pos.y = 0;
     this.camera_pos.z = 30;
 
+    
+
+    this.targets = {table: [], sphere: []};
+    this.image_objects = [];
+
+    for ( var i = 0; i < this.game_images.length; i += 3 )
+    {
+        var geometry = new THREE.PlaneGeometry(3, 3);
+        
+        var material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.game_textures[i/3], transparent: true, opacity: 0});
+        this.materials.push(material);
+        var object = new THREE.Mesh( geometry, material );
+        object.position.x = Math.random() * 7 - 2;
+        object.position.y = Math.random() * 5 - 2;
+        object.position.z = Math.random() * 15 - 2;
+        this.root.add(object);
+        this.image_objects.push(object);
+
+        var object = new THREE.Object3D();
+        object.position.x = ( this.game_images[ i + 2 ] * 4 - 18) ;//- 1330 ; // row
+        object.position.y = - ( this.game_images[ i + 1 ] * 6 - 13 );// + 990 ; // col
+        this.targets.table.push( object );
+    }
+
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+PBGamesSlide.prototype.loadResources = function()
+{
     this.game_images = [
+    
         "aa.jpg", 1, 1,
         "acr.jpg", 1, 2,
         "ac3.png", 1, 3,
@@ -206,32 +252,16 @@ PBGamesSlide.prototype.init = function(App)
         "unco.jpg", 3, 7,
         "waw.png", 3, 8
     ];
-
-    this.root = new THREE.Object3D();
-    this.targets = {table: [], sphere: []};
-    this.image_objects = [];
-    this.materials = [];
+    this.game_textures = [];
+    
     for ( var i = 0; i < this.game_images.length; i += 3 )
     {
-        var geometry = new THREE.PlaneGeometry(3, 3);
-        var texture = THREE.ImageUtils.loadTexture("resources/titles/"+this.game_images[i]);
-        var material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: texture, transparent: true, opacity: 0});
-        this.materials.push(material);
-        var object = new THREE.Mesh( geometry, material );
-        object.position.x = Math.random() * 7 - 2;
-        object.position.y = Math.random() * 5 - 2;
-        object.position.z = Math.random() * 15 - 2;
-        this.root.add(object);
-        this.image_objects.push(object);
+        var texture = new THREE.ImageUtils.loadTexture("resources/titles/"+this.game_images[i]);
 
-        var object = new THREE.Object3D();
-        object.position.x = ( this.game_images[ i + 2 ] * 4 - 18) ;//- 1330 ; // row
-        object.position.y = - ( this.game_images[ i + 1 ] * 6 - 13 );// + 990 ; // col
-        this.targets.table.push( object );
+        console.log("Loading i: " + i + " " + this.game_images[i]);
+
+        this.game_textures.push(texture);
     }
-
-    this.setObject3D(this.root);
-    this.initAnimations();
 }
 
 PBGamesSlide.prototype.initAnimations = function()
@@ -259,6 +289,7 @@ PBGamesSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     this.animations.push(animatorOut);
 }
+
 PBGamesSlide.prototype.createFadeIn = function()
 {
     var fadeIn = new Sim.KeyFrameAnimator;
@@ -270,6 +301,8 @@ PBGamesSlide.prototype.createFadeIn = function()
     });
     return fadeIn;
 }
+
+
 PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
 {
 
@@ -290,33 +323,11 @@ PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
 
     }
     var tweenjs = new Sim.TweenjsAnimator;
+    tweenjs.name = "PBGameSlidemoveObjects";
     tweenjs.init({tweens: tween_group, duration: duration * 2 }); //, onComplete: group.onGroupComplete
     return tweenjs;
 }
 
-PBGamesSlide.prototype.nextAnimation = function()
-{
-    // if we are reloaded our opacity will be reset.
-    if (this.animations.isBeginning())
-    {
-        for (var i = 0; i < this.materials.length; i++)
-        {
-            this.materials[i].opacity = 0;
-        }        
-    }
-    SimpleSlide.prototype.nextAnimation.call(this)
-}
-
-PBGamesSlide.prototype.tweenRender = function ()
-{
-    //this.app.renderer.render( this.app.scene, this.app.camera );
-}
-
-PBGamesSlide.prototype.update = function ()
-{
-    TWEEN.update();
-    Sim.Object.prototype.update.call(this);
-}
 //slides.push(new PBGamesSlide());
 
 
@@ -332,11 +343,8 @@ PunkBusterServicesSlide.prototype = new SimpleSlide();
 
 PunkBusterServicesSlide.prototype.init = function(App)
 {
-    this.root = new THREE.Object3D();
-
     SimpleSlide.prototype.init.call(this, App);
-    this.materials = [];
-
+ 
     this.pnka_position = new THREE.Object3D();
     this.pnka_position.position.set(-250, 220, 5);
 
@@ -351,8 +359,8 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.root.add(this.pbcl_position);
     
     // bfp4f    
-    var texture = THREE.ImageUtils.loadTexture("resources/BattlefieldPlay4Free_box.jpg");
-    var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: texture, transparent: true, opacity: 0}); //
+    
+    var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.bfp4f_texture, transparent: true, opacity: 0}); //
     this.materials.push(material);
     var geometry = new THREE.CubeGeometry(100,150,10);
     this.bfp4f = new THREE.Mesh(geometry, material);
@@ -376,71 +384,49 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.root.add(this.pbcl_text);
 
     
-    // Gear Model
-    var loader = new THREE.ColladaLoader();
-    var that = this;
-    this.pba_gear = new THREE.Object3D();
-    this.pbb_gear = new THREE.Object3D();
-    this.pbcl_gear = new THREE.Object3D();
+    // GEARS
 
-    loader.load.call(this, "resources/models/Gear-Handmade.dae", function ( collada ) {
-                
+    // PnkBstrA gear
+    this.pba_gear = copyModel(this.gear_geometry, this.gear_material);
+    this.pba_gear.scale.x =  this.pba_gear.scale.y = this.pba_gear.scale.z = 25;
+    this.pba_gear.position.set(250, 220, 5);
 
-                that.dae = collada.scene;
-                skin = collada.skins[ 0 ];
 
-                that.dae.position.x = 250;
-                that.dae.position.y = 220;
-                that.dae.position.z = 5;
-                // set the model to the center so we can rotate it properly.
-                that.dae.children[0].position.set(0,0,0); 
-                that.dae.updateMatrix();
-                var geometry = that.dae.children[ 0 ].geometry;
-                var material = that.dae.children[ 0 ].material;
+    // PnkBstrB gear
+    this.pbb_gear = copyModel(this.gear_geometry, this.gear_material);
+    this.pbb_gear.scale.x =  this.pbb_gear.scale.y = this.pbb_gear.scale.z = 25;
+    this.pbb_gear.position.set(-250, 220, 5);
 
-                // PnkBstrA gear
-                that.pba_gear = copyModel(geometry, material);
-                that.pba_gear.scale.x =  that.pba_gear.scale.y = that.pba_gear.scale.z = 25;
-                that.pba_gear.position.set(250, 220, 5);
-                
+    // pbcl.dll gear
+    this.pbcl_gear = copyModel(this.gear_geometry, this.gear_material);
+    this.pbcl_gear.scale.x =  this.pbcl_gear.scale.y = this.pbcl_gear.scale.z = 25;
+    this.pbcl_gear.position.set(250, 220, 5);                
 
-                // PnkBstrB gear
-                that.pbb_gear = copyModel(geometry, material);
-                that.pbb_gear.scale.x =  that.pbb_gear.scale.y = that.pbb_gear.scale.z = 25;
-                that.pbb_gear.position.set(-250, 220, 5);
+    // set transparency for the gears.
+    for (var i = 0; i < this.pba_gear.material.materials.length; i++)
+    {
+        this.pba_gear.material.materials[i].transparent = true;
+        this.pba_gear.material.materials[i].opacity = 0;
+        this.pbb_gear.material.materials[i].transparent = true;
+        this.pbb_gear.material.materials[i].opacity = 0;
+        this.pbcl_gear.material.materials[i].transparent = true;
+        this.pbcl_gear.material.materials[i].opacity = 0;
+    }
 
-                // pbcl.dll gear
-                that.pbcl_gear = copyModel(geometry, material);
-                that.pbcl_gear.scale.x =  that.pbcl_gear.scale.y = that.pbcl_gear.scale.z = 25;
-                that.pbcl_gear.position.set(250, 220, 5);                
-                
-                // set transparency for the gears.
-                for (var i = 0; i < that.pba_gear.material.materials.length; i++)
-                {
-                    that.pba_gear.material.materials[i].transparent = true;
-                    that.pba_gear.material.materials[i].opacity = 0;
-                    that.pbb_gear.material.materials[i].transparent = true;
-                    that.pbb_gear.material.materials[i].opacity = 0;
-                    that.pbcl_gear.material.materials[i].transparent = true;
-                    that.pbcl_gear.material.materials[i].opacity = 0;
-                }
-
-                that.root.add(that.pba_gear);
-                that.root.add(that.pbb_gear);
-                that.root.add(that.pbcl_gear);
-                // must init our animations after model has loaded here.
-                that.initAnimations.call(that);
-    });
+    this.root.add(this.pba_gear);
+    this.root.add(this.pbb_gear);
+    this.root.add(this.pbcl_gear);
+    this.initAnimations();
 
     
     this.createLighting();
 
     // FLOOR: mesh to receive shadows
-    var floorTexture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
-    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
-    floorTexture.repeat.set( 10, 10 );
+    
+    this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
+    this.floor_texture.repeat.set( 10, 10 );
     // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: floorTexture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
     this.materials.push(floorMaterial);
     var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
     var floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -453,11 +439,37 @@ PunkBusterServicesSlide.prototype.init = function(App)
     this.setObject3D(this.root);
     
 }
+PunkBusterServicesSlide.prototype.loadResources = function()
+{
+    this.bfp4f_texture = THREE.ImageUtils.loadTexture("resources/BattlefieldPlay4Free_box.jpg");
+    this.floor_texture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
+
+    // Gear Model
+    var loader = new THREE.ColladaLoader();
+    var that = this;
+    this.pba_gear = new THREE.Object3D();
+    this.pbb_gear = new THREE.Object3D();
+    this.pbcl_gear = new THREE.Object3D();
+    var that = this;
+    loader.load("resources/models/Gear-Handmade.dae", function ( collada ) {
+        that.dae = collada.scene;
+        skin = collada.skins[ 0 ];
+
+        that.dae.position.x = 250;
+        that.dae.position.y = 220;
+        that.dae.position.z = 5;
+        // set the model to the center so we can rotate it properly.
+        that.dae.children[0].position.set(0,0,0); 
+        that.dae.updateMatrix();
+        that.gear_geometry = that.dae.children[ 0 ].geometry;
+        that.gear_material = that.dae.children[ 0 ].material;        
+    });
+}
 
 PunkBusterServicesSlide.prototype.createTextObject = function(text, position, x, y, z)
 {
      // text objects
-    object = this.create2dText(text, 20);
+    object = this.create2dText(text, 30);
     object.position.set(position.position.x + x,
                         position.position.y + y,
                         position.position.z + z);
@@ -507,7 +519,7 @@ PunkBusterServicesSlide.prototype.createLighting = function()
 
 PunkBusterServicesSlide.prototype.runAnimation = function(animation)
 {
-    this.app.camera.position.set(0,150,400);
+    this.app.camera.position.set(0,150,500);
     this.animating = !this.animating; // set animating to true.
     this.animate(animation, this.animating);
 }
@@ -590,35 +602,339 @@ PunkBusterServicesSlide.prototype.buildAnimationGroup = function(model, text_mat
     //this.addChild(gear_animation);
     return animation_group;
 }
+//slides.push(new PunkBusterServicesSlide());
 
-PunkBusterServicesSlide.prototype.update = function()
+
+
+PnkBstrASlide = function()
+{
+    this.name = "PnkBstrASlide";
+    SimpleSlide.call(this);
+}
+
+PnkBstrASlide.prototype = new SimpleSlide();
+
+PnkBstrASlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    this.floor = this.createWireframeFloor();
+    this.floor.position.set(0,20,-400); // move floor a bit back.
+    this.root.add(this.floor);
+    
+    this.heading_position = new THREE.Object3D();
+    this.heading_position.position.set(0,290,0);
+    this.heading_text = this.createHeading("PnkBstrA Service", this.heading_position);
+    this.root.add(this.heading_text);
+    
+    this.bullets_position = new THREE.Object3D();
+    this.bullets_position.position.set(-280, 240, 0);
+
+    this.loader_text = this.createTextObject("- Loads and manages PnkBstrB.exe", this.bullets_position, 0,0,0);
+    this.root.add(this.loader_text);
+
+    this.re_text = this.createTextObject("- Contains no anti-RE'ing functionality", this.bullets_position, 0, -25, 0);
+    this.root.add(this.re_text);
+
+    this.listens_text = this.createTextObject("- Listens on 127.0.0.1:44301", this.bullets_position, 0, -50, 0);
+    this.root.add(this.listens_text);
+
+    this.cmd_text = this.createTextObject("- Accepts commands from pbcl.dll", this.bullets_position, 0, -75, 0);
+    this.root.add(this.cmd_text);
+
+    this.delete_text = this.createTextObject("- Deletes PnkBstrB service on unload.", this.bullets_position, 0, -100, 0);
+    this.root.add(this.delete_text);
+
+    var s_geometry = new THREE.PlaneGeometry(400, 150);
+    var s_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.cmds_texture, transparent: true } );
+    this.materials.push(s_material);
+    this.pnkbstra_mesh = new THREE.Mesh( s_geometry, s_material ); 
+    this.pnkbstra_target = [140, 200, -80];
+    this.pnkbstra_mesh.position.set(1000, 200, -80);
+    this.pnkbstra_mesh.rotation.y = -0.1
+    //this.pnkbstra_mesh.rotation.x = 0.1
+    
+    this.root.add(this.pnkbstra_mesh);
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+PnkBstrASlide.prototype.loadResources = function()
+{
+    this.cmds_texture = new THREE.ImageUtils.loadTexture("resources/pnkbstra_cmds.png");
+}
+
+PnkBstrASlide.prototype.createHeading = function(text, position)
+{
+    object = this.create2dText(text, 40, 400, 100, 'center');
+    object.position.set(position.position.x,
+                        position.position.y,
+                        position.position.z);
+    console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
+    object.material.opacity = 0;
+    this.materials.push(object.material);
+    return object;
+}
+PnkBstrASlide.prototype.createTextObject = function(text, position, x, y, z)
+{
+     // text objects
+    object = this.create2dText(text, 20, 1000, 50, 'left');
+    object.position.set(position.position.x + x,
+                        position.position.y + y,
+                        position.position.z + z);
+    console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
+    object.material.opacity = 0;
+    this.materials.push(object.material);
+
+    return object;
+}
+
+PnkBstrASlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var slideIn = new Sim.KeyFrameAnimator;
+    slideIn.init({ 
+        interps: ObjectEffects.prototype.slideIn(this.pnkbstra_mesh, this.pnkbstra_target),
+        loop: false,
+        duration: 500
+    });
+    slideIn.name = "PnkBstrASlide_slideIn";
+    this.animations.push(slideIn);
+    this.addChild(slideIn);
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+PnkBstrASlide.prototype.runAnimation = function(animation)
+{
+    this.app.camera.position.set(0,150,400);
+    this.animating = !this.animating; // set animating to true.
+    this.animate(animation, this.animating);
+}
+
+//slides.push(new PnkBstrASlide());
+
+
+
+
+FnkBstrASlide = function()
+{
+    this.name = "FnkBstrASlide";
+    SimpleSlide.call(this);
+}
+
+FnkBstrASlide.prototype = new SimpleSlide();
+
+FnkBstrASlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+    
+    parameters = { color: 0xffffff, envMap: this.textureCube, shading: THREE.FlatShading };
+    cubeMaterial = new THREE.MeshBasicMaterial( parameters );
+    //this.materials.push(cubeMaterial)
+
+    var geo = new THREE.SphereGeometry( 50, 50, 50);
+    this.discoball_mesh = new THREE.Mesh( geo, cubeMaterial );
+    this.discoball_mesh.position.set(0, 250, 0);
+    this.root.add(this.discoball_mesh);
+    
+ 
+    // LIGHTS
+    //this.createLighting();
+    this.createFakeLights();
+    // FLOOR: mesh to receive shadows
+    
+    this.floorTexture.wrapS = this.floorTexture.wrapT = THREE.RepeatWrapping; 
+    this.floorTexture.repeat.set( 10, 10 );
+    // Note the change to Lambert material.
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floorTexture, side: THREE.DoubleSide, transparent: true, opacity: 1 } );
+    this.materials.push(floorMaterial);
+    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.y = -0.5;
+    floor.rotation.x = Math.PI / 2;
+    // Note the mesh is flagged to receive shadows
+    floor.receiveShadow = true;
+    //this.root.add(floor);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+FnkBstrASlide.prototype.loadResources = function()
+{
+    this.floorTexture = new THREE.ImageUtils.loadTexture( 'resources/checkerboard.jpg' );
+    this.textureCube = THREE.ImageUtils.loadTextureCube( ["resources/disco/disco000.png","resources/disco/disco002.png","resources/disco/disco003.png","resources/disco/disco008.png","resources/disco/disco005.png","resources/disco/disco006.png"] );
+}
+
+FnkBstrASlide.prototype.createLighting = function()
+{
+    
+    this.lights = [];
+    for (var i = 0; i < 20; i++)
+    {
+        var color = getRandomColor();
+        var light = ObjectEffects.prototype.createSpotlight(color);
+        light.exponent = 500;
+        light.intensity = 5;
+        light.position.set(0, 100, 0);
+        light.target.position.x = 50 * i;
+
+        light.target.position.y = 0;//getRandomInt(-150, 250);
+        light.target.position.z = -i * 50; 
+        console.log("target: " + light.target.position.x + " " + light.target.position.y  + " " + light.target.position.z );
+        
+        this.root.add(light);
+        this.lights.push(light);
+    }
+}
+FnkBstrASlide.prototype.createFakeLights = function()
+{
+    this.particles = [];
+    this.color = [];
+    this.h = 0;
+    this.geometry = new THREE.Geometry();
+    this.particle_materials = [];
+
+    this.group = new THREE.Object3D();
+
+
+    var geo = new THREE.SphereGeometry( 70, 32, 8 ); // Extra geometry to be broken down for MeshFaceMaterial
+    var parameters = { color: 0xf0ff0f };
+    cubeMaterial = new THREE.MeshBasicMaterial( parameters );
+    this.lights = new THREE.Mesh(geo, cubeMaterial);
+    this.root.add(this.lights);
+    /*
+    this.parameters = [
+                    [ [1, 1, 0.5], 5 ],
+                    [ [0.95, 1, 0.5], 4 ],
+                    [ [0.90, 1, 0.5], 3 ],
+                    [ [0.85, 1, 0.5], 2 ],
+                    [ [0.80, 1, 0.5], 1 ]
+                ];
+    for ( var i = 0; i < 200; i ++ ) 
+    {
+
+        var vertex = new THREE.Vector3();
+        vertex.x = getRandomInt(-250, 250);
+        vertex.y = getRandomInt(10, 250);
+        vertex.z = getRandomInt(-250, -500);
+
+        this.geometry.vertices.push( vertex );
+
+    }
+    
+
+    for ( var i = 0; i < this.parameters.length; i ++ ) {
+
+        this.color = this.parameters[i][0];
+        size  = this.parameters[i][1];
+
+        this.particle_materials[i] = new THREE.ParticleBasicMaterial( { size: size } );
+
+        var particle = new THREE.ParticleSystem( this.geometry, this.particle_materials[i] );
+
+        particle.rotation.x = Math.random() * 6;
+        particle.rotation.y = Math.random() * 6;
+        particle.rotation.z = Math.random() * 6;
+        this.particles.push(particle);
+        this.root.add(particle);
+    }
+    */
+}
+
+FnkBstrASlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.moveFloorIn(this.root),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+FnkBstrASlide.prototype.runAnimation = function(animation)
+{
+    this.app.camera.position.set(0,150,1000);
+    this.animating = !this.animating; // set animating to true.
+    this.animate(animation, this.animating);
+}
+
+
+FnkBstrASlide.prototype.update = function()
 {
     Sim.Object.prototype.update.call(this);
-}
-PunkBusterServicesSlide.prototype.nextAnimation = function()
-{
-    // if we are reloaded our opacity will be reset.
-    if (this.animations.isBeginning())
+    var timer = 0.0005 * Date.now();   
+    if (this.discoball_mesh != null)
     {
-        for (var i = 0; i < this.materials.length; i++)
-        {
-            //this.materials[i].opacity = 0;
-        }        
+        this.discoball_mesh.rotation.y += 0.001;
     }
-    SimpleSlide.prototype.nextAnimation.call(this)
+    /*
+    if (this.lights)
+    {
+        for (var i = 0; i < this.lights.length; i++)
+        {
+            this.lights[i].target.position.x = Math.cos(timer) * 25 * i;
+            this.lights[i].target.position.z = Math.sin(timer) * 25 * i;
+            //this.lights[i].exponent = 1 / i;
+        }
+    }*/
+    
+    if (this.particles)
+    {
+        
+        /*
+        for (var i = 0; i < this.particles.length; i++)
+        {
+            this.particles[i].rotation.z = timer * ( i < 4 ? i + 1 : - ( i + 1 ) );
+        }
+
+        for (var i = 0; i < this.particle_materials.length; i ++ ) 
+        {
+            this.color = this.parameters[i][0];
+
+            this.h = ( 360 * ( this.color[0] + timer ) % 360 ) / 360;
+            this.particle_materials[i].color.setHSL( this.h, this.color[1], this.color[2] );
+        }
+        */
+    }
+    
 }
-
-slides.push(new PunkBusterServicesSlide());
-
-
-
-
-
-
-
-
-
-
+slides.push(new FnkBstrASlide());
 
 /*
 

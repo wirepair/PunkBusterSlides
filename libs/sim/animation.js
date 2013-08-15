@@ -42,10 +42,10 @@ Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 		var animation = this.animations.next();
 		// also we only set the onGroupComplete of the longest running so
 		// we will know when all animations are done.
-		if (this.isChain)
-		{
+		//if (this.isChain)
+		//{
 			animation.on_complete_callback = this.onComplete;
-		}
+		//}
 		if (animation.duration >= final_animation.duration)
 		{
 			final_animation = animation;
@@ -207,19 +207,21 @@ Sim.Animator.prototype.update = function()
  */
 Sim.Animator.prototype.onComplete = function()
 {
-	if (this.on_complete_callback != null)
+	console.log("Sim.Animator.onComplete called for " + this.name);
+	if ( this.on_complete_callback != null)
 	{
 		this.on_complete_callback.call(this.parent);
 		return;
 	}
-
-	if (this.on_group_complete_callback == null)
+	// must call animation groups ongroupcomplete if last animation in group.
+	if ( this.on_group_complete_callback == null )
 	{
+		console.log("Sim.Animator.onComplete on_group_complete_callback is null for " + this.name);
 		g_publisher.publish("complete");
 	}
 	else
 	{
-		console.log("This animation must signal group complete.");
+		console.log("==================This is the final animation, signaling group complete.");
 		this.on_group_complete_callback.call(this.parent);
 	}
 }
@@ -262,6 +264,7 @@ Sim.TweenjsAnimator.prototype.start = function()
 
 Sim.TweenjsAnimator.prototype.stop = function()
 {
+	this.running = false;
 	console.log("TweenjsAnimator.stop");
 	this.onComplete();
 }
@@ -277,12 +280,13 @@ Sim.TweenjsAnimator.prototype.update = function()
 Sim.TweenjsAnimator.prototype.onComplete = function()
 {
 	console.log("TweenjsAnimator onComplete called.");
+	this.running = false;
 	for (var i = 0; i < this.tweens.length; i++)
 	{
 		this.tweens[i].stop();
 		TWEEN.remove(this.tweens[i]);
 	}
-	this.running = false;
+	
 	//TWEEN.removeAll();
 	// must call animation groups oncomplete if part of a group.
 	if ( this.on_complete_callback != null)
@@ -292,6 +296,7 @@ Sim.TweenjsAnimator.prototype.onComplete = function()
 	// must call animation groups ongroupcomplete if last animation in group.
 	if ( this.on_group_complete_callback == null )
 	{
+		console.log("This tweenjs animation is complete and no on_group_complete_callback set: " + this.name);
 		g_publisher.publish("complete");
 	}
 	else
@@ -344,7 +349,7 @@ Sim.KeyFrameAnimator.prototype.start = function()
 {
 	if (this.running)
 		return;
-	console.log("calling start in KeyFrameAnimator");
+	console.log("calling start in KeyFrameAnimator: " + this.name);
 	this.startTime = Date.now();
 	this.running = true;
 }

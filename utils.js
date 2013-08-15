@@ -30,3 +30,27 @@ function copyModel(geometry, material)
 	meshface.materials = copyMaterial(material);
 	return new THREE.Mesh( geometry,  meshface );
 }
+
+function getPowerOfTwo(value, pow) 
+{
+	var pow = pow || 1;
+	while ( pow < value ) 
+	{
+	    pow *= 2;
+	}
+	return pow;
+}
+
+function getRandomColor()
+{
+	var color = getRandomInt(0, 256);
+	color = color << 16;
+	color += getRandomInt(0, 256) << 8;
+	color += getRandomInt(0, 256);
+	return color;
+}
+
+function getRandomInt (min, max) 
+{
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}

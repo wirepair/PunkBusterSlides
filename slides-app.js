@@ -36,8 +36,9 @@ SlidesApp.prototype.registerSlides = function(slides)
 {
     this.slides.setList(slides);
     do {
-        var slide = this.slides.next()
-        slide.init(this);
+        var slide = this.slides.next();
+        slide.loadResources();
+        //slide.init(this);
     } while ( this.slides.peek()  != null)
     this.slides.reset();
     this.nextSlide();
@@ -53,6 +54,11 @@ SlidesApp.prototype.slideComplete = function()
     this.nextSlide();
 }
 
+SlidesApp.prototype.goto = function(index)
+{
+    this.slides.get(index); // update index
+    this.nextSlide();
+}
 /*
  * nextSlide - Checks if we are at the the end of the slide deck.
  * Next, checks if we have a current slide and if we do call it's
@@ -68,7 +74,7 @@ SlidesApp.prototype.nextSlide = function()
     if ( this.slides.isEnd() )
     {
         // We're done.
-        //console.log("We are at the end of the slides!");
+        console.log("We are at the end of the slides!");
         return;
     } 
 
@@ -79,6 +85,7 @@ SlidesApp.prototype.nextSlide = function()
         this.removeObject(current);
     }
     slide = this.slides.next();
+    slide.init(this);
     this.addObject(slide);
     slide.go();
 }
@@ -91,10 +98,6 @@ SlidesApp.prototype.nextSlide = function()
  * and calls it's done method and removes the slide from our list of
  * current objects.
  *
- * Then we get a reference to the previous slide, re-add it and call
- * the slides reloadSlide method which helps reset our animations etc.
- *
- * @calls - slide.reloadSlide()
  */
 SlidesApp.prototype.previousSlide = function()
 {
@@ -111,9 +114,9 @@ SlidesApp.prototype.previousSlide = function()
     // go to the previous slide.
     //console.log("GOING TO PREVIOUS SLIDE!");
     slide = this.slides.prev();
+    slide.init(this);
     this.addObject(slide);
-
-    slide.reloadSlide();
+    slide.go();
 }
 
 
@@ -155,207 +158,6 @@ SlidesApp.prototype.update = function()
     Sim.App.prototype.update.call(this);
 }
 
-/* VARIOUS EFFECTS FOR OBJECTS */
-ObjectEffects = function()
-{
-
-}
-ObjectEffects.prototype = new Object();
-
-/*
- * rotateIn - rotates the object (either root or single object) by
- * setting keys and values to be interpolated from a negative z incrementally to a positive
- * z axis.
- *
- */
-ObjectEffects.prototype.rotateIn = function(object3D)
-{
-    var inPositionKeys = [0, .25, .75, 1];
-    var inPositionValues = [ { x : 0, y: 0, z : -100}, 
-                            { x: 0, y: 0, z: -75},
-                            { x: 0, y: 0, z: -50},
-                            { x : 0, y: 0, z : 0}
-                            ];
-    var inRotationKeys = [0, .5, 1];
-    var inRotationValues = [ { z: 0 }, 
-                                    { z: Math.PI},
-                                    { z: Math.PI * 2 },
-                                    ];
-    return [ 
-            { keys:inPositionKeys, values:inPositionValues, target:object3D.position },
-            { keys:inRotationKeys, values:inRotationValues, target:object3D.rotation } 
-            ];
-}
-
-
-/*
- * rotateIn - rotates the object (either root or single object) by
- * setting keys and values to be interpolated from a positive z incrementally to a negative
- * z axis.
- *
- */
-ObjectEffects.prototype.rotateOut = function(object3D)
-{
-    var outPositionKeys = [0, .25, .75, 1];
-    var outPositionValues = [ { x : 0, y: 0, z : 0}, 
-                            { x: 0, y: 0, z: -25},
-                            { x: 0, y: 0, z: -75},
-                            { x : 0, y: 0, z : -100}
-                            ];
-    var outRotationKeys = [0, .5, 1];
-    var outRotationValues = [ { z: 0 }, 
-                                    { z: Math.PI},
-                                    { z: Math.PI * 2 },
-                                    ];
-    return [ 
-            { keys:outPositionKeys, values:outPositionValues, target:object3D.position },
-            { keys:outRotationKeys, values:outRotationValues, target:object3D.rotation } 
-            ];
-}
-
-/*
- * moveFloorIn - moves the object (either root or single object) by
- * setting keys and values to be interpolated from a negative z incrementally to a positive
- * z axis.
- *
- */
-ObjectEffects.prototype.moveFloorIn = function(object3D)
-{
-    var inPositionKeys = [0, .25, .75, 1];
-    var inPositionValues = [ { x : 0, y: 0, z : -10000}, 
-                            { x: 0, y: 0, z: -750},
-                            { x: 0, y: 0, z: -500},
-                            { x : 0, y: -1, z : 0}
-                            ];
-    return [ 
-            { keys:inPositionKeys, values:inPositionValues, target:object3D.position }
-            ];
-}
-
-/*
- * moveFloorOut - moves the object (either root or single object) by
- * setting keys and values to be interpolated from a positive z incrementally to a negative
- * z axis.
- *
- */
-ObjectEffects.prototype.moveFloorOut = function(object3D)
-{
-    var outPositionKeys = [0, .25, .75, 1];
-    var outPositionValues = [ { x : 0, y: -1, z : 0}, 
-                            { x: 0, y: 0, z: -250},
-                            { x: 0, y: 0, z: -750},
-                            { x : 0, y: 0, z : -10000}
-                            ];
-    return [ 
-            { keys:outPositionKeys, values:outPositionValues, target:object3D.position }
-            ];
-}
-
-/*
- * fadeIn - Set's an array of materials opacity level from 0 (transparent) to 1.
- * 
- */
-ObjectEffects.prototype.fadeIn = function( materials )
-{
-    return [{ 
-                keys:[0, .5, 1], 
-                values:[ { opacity: 0},
-                         { opacity: 0.5},
-                         { opacity: 1} 
-                         ],
-                target: materials
-                }];
-}
-
-/*
- * fadeOut - Set's an array of materials opacity level from 1 (visible) to 0 (transparent).
- * 
- */
-ObjectEffects.prototype.fadeOut = function( materials )
-{
-    return [{ 
-                keys:[0, .5, 1], 
-                values:[ { opacity: 1},
-                         { opacity: 0.5},
-                         { opacity: 0} 
-                         ],
-                target: materials
-                }];
-}
-ObjectEffects.prototype.tweenObjectToAxisRotateZ = function ( objects, targets, duration, axis )
-{
-    var tween_group = [];
-    for ( var i = 0; i < objects.length; i ++ ) 
-    {
-
-        var object = objects[ i ];
-        var target = targets[ i ];
-        if( axis == 'x')
-        {
-            tween_group.push(new TWEEN.Tween( object.position )
-                .to( { x: target.position.x }, duration )
-                .easing( TWEEN.Easing.Exponential.InOut ));
-        } 
-        else if ( axis == 'y')
-        {
-            tween_group.push(new TWEEN.Tween( object.position )
-                .to( { y: target.position.y }, duration )
-                .easing( TWEEN.Easing.Exponential.InOut ));
-        }
-
-        tween_group.push(new TWEEN.Tween( object.rotation )
-            .to( { z: target.rotation.z }, duration ))
-    }
-    var tweenjs = new Sim.TweenjsAnimator;
-    tweenjs.init({tweens: tween_group, duration: duration });
-    return tweenjs;
-}
-
-/*
- * glowEffectMaterial - Uses a custom shader to make a glowing effect. Requires the camera
- * Not sure why...
- *
- */
-ObjectEffects.prototype.glowEffectMaterial = function (camera)
-{
-    var customMaterial = new THREE.ShaderMaterial( 
-    {
-        uniforms: 
-        { 
-            "c":   { type: "f", value: 1.0 },
-            "p":   { type: "f", value: 1.4 },
-            glowColor: { type: "c", value: new THREE.Color(0xffff00) },
-            viewVector: { type: "v3", value: camera.position }
-        },
-        vertexShader:   document.getElementById( 'glowvertexShader'   ).textContent,
-        fragmentShader: document.getElementById( 'glowfragmentShader' ).textContent,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending,
-        transparent: true
-    });
-    return customMaterial
-}
-ObjectEffects.prototype.createSpotlight = function(color)
-{
-    var spotlight = new THREE.SpotLight(color);
-    spotlight.shadowCameraVisible = false;
-    spotlight.shadowDarkness = 0.15;
-    spotlight.intensity = 2;
-    // must enable shadow casting ability for the light
-    spotlight.castShadow = true;
-    return spotlight;
-}
-
-ObjectEffects.prototype.makeVisible = function( objects )
-{
-    return [{ 
-                keys:[0, 1], 
-                values:[ { opacity: 0},
-                         { opacity: 1} 
-                         ],
-                target: objects
-                }];
-}
 
 /* BASIC SLIDE OBJECT */
 SimpleSlide = function()
@@ -378,8 +180,15 @@ SimpleSlide.prototype.init = function(App)
     this.camera_pos.x = 0;
     this.camera_pos.y = 0;
     this.camera_pos.z = 3.3333;
+
+    this.materials = [];
+    this.root = new THREE.Object3D();
 }
 
+SimpleSlide.prototype.loadResources = function()
+{
+    // use this method to load individual resources.
+}
 /*
  * go - Called by our app container during nextSlide. Sets the object3d visible if 
  * we were 'reloaded'. Resets animations back to their beginning. Also sets up
@@ -417,6 +226,12 @@ SimpleSlide.prototype.done = function()
 {
     console.log("done called");
     this.object3D.visible = false;
+    this.root.visible = false;
+    // delete old references.
+    //this.object3D = null;
+    this.root = null;
+    this.materials = null;
+    this.animations = null;
     this.unsubscribeListeners();
     this.setCamera();
 }
@@ -425,40 +240,53 @@ SimpleSlide.prototype.done = function()
  * create2dText - Creates text by creating a 2d canvas and maps it as a Texture.
  * TODO: Add parameters so callers can modify text color/size etc.
  */
-SimpleSlide.prototype.create2dText = function(the_text, size)
+SimpleSlide.prototype.create2dText = function(the_text, size, width, height, align)
 {
+
     var size = size || 50;
     var canvas = document.createElement('canvas');
     var context = canvas.getContext('2d');
-    /*
-    context1.font = size + "px Times New Roman";
-    context1.fillStyle = "rgba(255,255,255,255);";// + ( Math.random() * 0.5 + 0.25 ) + ");";
-    context1.fillText(the_text, 0, 50);
-    
-    // canvas contents will be used for a texture
-    */
-    var x = canvas.width / 2;
-    var y = canvas.height / 2 - 10;
- 
-    context.font = '30pt Calibri';
-    context.textAlign = 'center';
+    var width = width || 350;
+    var height = height || 150;
+    var align = align || 'center';
+    canvas.width = width;
+    canvas.height = height;
+    context.font = size+'pt Calibri';
+    context.textAlign = align;
     context.fillStyle = 'white';
+    var x = canvas.width / 2;
+    var y = canvas.height / 2;
+    console.log("x: " + x + " y: " + y);
     context.fillText(the_text, x, y);
-
-    //context.fillText('(' + width + 'px wide)', x, y + 40);
-    var text_texture = new THREE.Texture(canvas) 
+    var text_texture = new THREE.Texture(canvas);
     text_texture.needsUpdate = true;
       
     var material = new THREE.MeshBasicMaterial( {map: text_texture, side:THREE.DoubleSide } );
     material.transparent = true;
-    //material.wireframe = true;
     var mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(x, y), material);
-    //mesh.rotation.y = 0.1;
-    mesh.wireframe = true;
+        new THREE.PlaneGeometry(canvas.width/2, canvas.height/2), material);
+    
+
     return mesh;
 }
+SimpleSlide.prototype.createWireframeFloor = function()
+{
+    var geometry = new THREE.Geometry();
+    var material = new THREE.LineBasicMaterial( { color: 0xff80ff, transparent: true } );
+    var size = 1000, step = 100;
+    for ( var i = - size; i <= size; i += step ) {
 
+        geometry.vertices.push( new THREE.Vector3( - size, - 0.04, i ) );
+        geometry.vertices.push( new THREE.Vector3(   size, - 0.04, i ) );
+
+        geometry.vertices.push( new THREE.Vector3( i, - 0.04, - size ) );
+        geometry.vertices.push( new THREE.Vector3( i, - 0.04,   size ) );
+
+    }
+    this.materials.push(material);
+    var line = new THREE.Line( geometry, material, THREE.LinePieces );
+    return line;
+}
 /*
  * setCamera - Sets the camera position when a slide is first called. This is important 
  * as it allows each slide to set it's own camera position. The defaults are set in 
@@ -481,6 +309,7 @@ SimpleSlide.prototype.setCamera = function()
  */
 SimpleSlide.prototype.animate = function(animation, on)
 {
+    console.log("animation running " + on);
     ( on ) ? animation.start() : animation.stop(); 
 }
 
@@ -489,17 +318,15 @@ SimpleSlide.prototype.animate = function(animation, on)
  * We have to get a reference to the animation that just completed to unsubscribe it's
  * complete message handler. 
  *
- * We also do a check to see if we are at the end of the slide and we have not been
- * reloaded (via previousSlide call). In which case we call slide_next. If we are
- * reloaded we have to unset the reloaded flag so that we can continue to the next slide
- * if we want to.
- *
  * @calls publish("next_slide")
  *
  */
 SimpleSlide.prototype.onAnimationComplete = function()
 {
+    console.log("===================================== onAnimationComplete hit");
     this.animating = !this.animating; // reset our animation flag to false.
+    if (this.animations == null)
+        return;
     var animation = this.animations.current();
     // really irritating, "complete" must be set in animations context, due to the animation calling publish("complete")
     // but 'this' has to be set to our Slide.
@@ -507,19 +334,13 @@ SimpleSlide.prototype.onAnimationComplete = function()
     g_publisher.unsubscribe("complete", this);
     //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
     
-    if (this.animations.isEnd() && this.reloaded == false)
+    if (this.animations.isEnd())
     {
-        //console.log("all animations complete:" + this.name);
-        //console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
+        console.log("all animations complete:" + this.name);
+        console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
         //this.publish("slide_next");
         g_publisher.publish("slide_next");
-    }
-
-    if (this.reloaded == true)
-    {
-        //console.log("Resetting reloaded flag.");
-        this.reloaded = false;
-    }    
+    }  
 }
 
 /*
@@ -532,48 +353,13 @@ SimpleSlide.prototype.onAnimationComplete = function()
  */
 SimpleSlide.prototype.nextAnimation = function()
 {
-    //console.log("nextAnimation index: " + this.animations.getIndex());
+    console.log("nextAnimation index: " + this.animations.getIndex());
     var animation = this.animations.next();
 
-    //this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
     g_publisher.subscribe("complete", this, this.onAnimationComplete);
     this.runAnimation(animation);
 }
 
-/* 
- * previousAnimation - Get a reference to the previous animation and subscribe to the
- * complete message. Then runs the animation. This is called when the user hits the
- * left arrow key.
- *
- * @calls runAnimation 
- */
-SimpleSlide.prototype.previousAnimation = function()
-{
-    var animation = this.animations.prev();
-    //console.log("PREVIOUS ANIMATION CALLED!");
-
-    //this.subscribe.call(animation, "complete", this, this.onAnimationComplete);
-    g_publisher.subscribe("complete", this, this.onAnimationComplete);
-    console.log("previousAnimation index: " + this.animations.getIndex());
-    this.runAnimation(animation);
-    
-}
-
-/*
- * reloadSlide - Called by container app when the user hits the left arrow key
- * to signify they want to return to the preious slide. Sets the reloaded flag
- * to true so once the animation completes we don't automatically go to the next
- * slide.
- *
- * @calls - previousAnimation();
- *
- */
-SimpleSlide.prototype.reloadSlide = function()
-{
-    this.reloaded = true;
-    this.setCamera();
-    this.previousAnimation();
-}
 /*
  * runAnimation - Called with an animation and sets the flag to animating.
  * 
@@ -583,7 +369,8 @@ SimpleSlide.prototype.reloadSlide = function()
  */
 SimpleSlide.prototype.runAnimation = function(animation)
 {
-    this.animating = !this.animating; // set animating to true.
+    console.log("Running runAnimation for " + this.name + " animation.name = " + animation.name);
+    this.animating = true; // set animating to true.
     this.animate(animation, this.animating);
 }
 
@@ -595,24 +382,21 @@ SimpleSlide.prototype.runAnimation = function(animation)
  */
 SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
 {
+    console.log("IN HANDLEKEYDOWN ANIMATING? " + this.animating);
     switch(keyCode)
     {
         case Sim.KeyCodes.KEY_LEFT:
-            if (this.animations.isBeginning())
+            
+            if (this.animating == false)
             {
-                if (this.animating == false)
-                {
-                    //this.publish("slide_previous");
-                    g_publisher.publish("slide_previous");
-                }
-            } 
+                //this.publish("slide_previous");
+                g_publisher.publish("slide_previous");
+            }
             else
             {
-                if (this.animating == true)
-                {
-                    this.animate(this.animations.current(), this.animating);
-                }
-                this.previousAnimation();
+                // stop current animation.
+                //this.animate(this.animations.current(), this.animating);
+                //g_publisher.publish("slide_previous");
             }
             break;
         case Sim.KeyCodes.KEY_RIGHT:
@@ -623,14 +407,23 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
                     //this.publish("slide_next");
                     g_publisher.publish("slide_next");
                 }
+                else
+                {
+                    console.log("ANIMATING BUT GO TO NEXT?");
+                    //this.animate(this.animations.current(), this.animating);
+                }
             }
             else
             {
-                if (this.animating == true)
+                //if (this.animating == true)
+                //{
+                //    this.animate(this.animations.current(), this.animating);
+                //}
+                console.log("this.animating is..." + this.animating);
+                if (this.animating == false)
                 {
-                    this.animate(this.animations.current(), this.animating);
+                    this.nextAnimation();
                 }
-                this.nextAnimation();
             }
             break;
     }
