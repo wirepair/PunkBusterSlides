@@ -289,6 +289,19 @@ SimpleSlide.prototype.createWireframeFloor = function(color)
     var line = new THREE.Line( geometry, material, THREE.LinePieces );
     return line;
 }
+SimpleSlide.prototype.createDottedFloor = function(coords, color, texture)
+{
+    var coords = coords || [4000,4000,10,10];
+    var color = color || 0xD8D8D8;
+    var texture = texture || THREE.ImageUtils.loadTexture('resources/disc.png');
+    var plane = new THREE.PlaneGeometry(coords[0], coords[1], coords[2], coords[3]);
+    var material = new THREE.ParticleBasicMaterial( { map: texture, size: 15, color: color} );
+    var floor = new THREE.ParticleSystem(plane, material);
+    floor.rotation.x = -1.50;
+    return floor;
+}
+
+
 /*
  * setCamera - Sets the camera position when a slide is first called. This is important 
  * as it allows each slide to set it's own camera position. The defaults are set in 

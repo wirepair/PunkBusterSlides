@@ -230,6 +230,57 @@ Sim.Animator.prototype.onComplete = function()
 Sim.Animator.default_duration = 1000;
 
 
+Sim.VideoAnimator = function()
+{
+	Sim.Animator.call();
+}
+
+Sim.VideoAnimator.prototype = new Sim.Animator;
+
+Sim.VideoAnimator.prototype.init = function(param)
+{
+	param = param || {};
+	this.complete_on_stop = param.complete_on_stop || false;
+	this.video = param.video;
+	this.video.addEventListener('ended',this.onComplete.bind(this));
+	this.video_texture = param.video_texture;
+	this.image_context = param.image_context;
+}
+
+Sim.VideoAnimator.prototype.start = function()
+{
+	if (this.running)
+		return;
+
+	console.log("calling start in VideoAnimator");
+	this.video.play();
+	this.running = true;
+}
+
+Sim.VideoAnimator.prototype.stop = function()
+{
+	this.running = false;
+	console.log("VideoAnimator.stop");
+	this.video.stop();
+	this.onComplete();
+}
+
+Sim.VideoAnimator.prototype.update = function()
+{
+	if ( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) 
+    {
+
+        this.image_context.drawImage( this.video, 0, 0 );
+
+        if ( this.video_texture ) 
+        {
+            this.video_texture.needsUpdate = true;
+        }
+    }
+}
+
+
+
 /* SINGLE ANIMATION TweenJS style*/
 Sim.TweenjsAnimator = function()
 {

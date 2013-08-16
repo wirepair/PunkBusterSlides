@@ -1019,6 +1019,105 @@ PnkBstrBSlide.prototype.runAnimation = function(animation)
 }
 
 
+DeobfuscateSlide = function()
+{
+    this.name = "DeobfuscateSlide";
+    SimpleSlide.call(this);
+}
+
+
+DeobfuscateSlide.prototype = new SimpleSlide();
+
+DeobfuscateSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+    this.floor = this.createDottedFloor();
+    this.floor.position.set(0,-200,-200); // move floor a bit back.
+    this.root.add(this.floor);
+    this.video = document.getElementById('pnkdecode_video');
+    this.image = document.createElement( 'canvas' );
+    this.image.width = 960;
+    this.image.height = 940;
+
+    this.imageContext = this.image.getContext( '2d' );
+    this.imageContext.fillStyle = '#000000';
+    this.imageContext.fillRect( 0, 0, 960, 940 );
+
+    this.video_texture = new THREE.Texture( this.image );
+    this.video_texture.minFilter = THREE.LinearFilter;
+    this.video_texture.magFilter = THREE.LinearFilter;
+
+    this.material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true } );
+    
+    var plane = new THREE.PlaneGeometry( 960, 940, 4, 4 );
+
+    this.video_mesh = new THREE.Mesh( plane, this.material );
+    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
+    this.video_mesh.position.y = 200;
+    this.video_mesh.rotation.y = 0;
+    this.video_mesh.position.z = 150;
+    this.root.add(this.video_mesh);
+    
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+/*
+DeobfuscateSlide.prototype.update = function()
+{
+    Sim.Object.prototype.update.call(this);
+    if ( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) 
+    {
+
+        this.imageContext.drawImage( this.video, 0, 0 );
+
+        if ( this.video_texture ) 
+        {
+            this.video_texture.needsUpdate = true;
+        }
+    }
+}
+*/
+
+DeobfuscateSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var videoAnimator = new Sim.VideoAnimator;
+    videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
+    this.addChild(videoAnimator);
+    this.animations.push(videoAnimator);
+
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+DeobfuscateSlide.prototype.runAnimation = function(animation)
+{
+    this.app.camera.position.set(0,150,2000);
+    this.animating = !this.animating; // set animating to true.
+    this.animate(animation, this.animating);
+}
+
+
 
 
 AntiRESlide = function()
@@ -1034,30 +1133,18 @@ AntiRESlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
 
     
-    var xor_geometry = new THREE.PlaneGeometry(170, 150);
-    var xor_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true } );
-    this.materials.push(xor_material);
-    this.xor_mesh = new THREE.Mesh( xor_geometry, xor_material ); 
-    this.xor_mesh.position.y = 150;
-    this.xor_mesh.position.z = 5;
-    //this.root.add(this.xor_mesh);
+    var idapin_geometry = new THREE.PlaneGeometry(300, 300);
+    var idapin_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true, opacity: 0 } );
+    this.materials.push(idapin_material);
+    this.idapin_mesh = new THREE.Mesh( idapin_geometry, idapin_material ); 
+    this.idapin_mesh.position.y = 100;
+    this.idapin_mesh.position.z = 5;
+    this.root.add(this.idapin_mesh);
 
     // PIN model
-    this.pin = new THREE.Mesh(this.pin_geometry, this.pin_material);
-    this.pin.scale.x = 20; 
-    this.pin.scale.y = 20;
-    this.pin.scale.z = 0.15;
-    this.pin.rotation.y = 0.1;
-    this.pin.rotation.z = 1;
-    this.pin.rotation.x = 1;
-    this.pin.position.set(0, 15, 0);                
+    this.createPinModels();
 
-    this.createLighting();
-    
-    this.root.add(this.pin);
-
-    // FLOOR: mesh to receive shadows
-    
+    // FLOOR
     this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
     this.floor_texture.repeat.set( 10, 10 );
     // Note the change to Lambert material.
@@ -1076,15 +1163,37 @@ AntiRESlide.prototype.init = function(App)
     this.setObject3D(this.root);
     this.initAnimations();
 }
+AntiRESlide.prototype.createPinModels = function()
+{
+    this.pin_left = new THREE.Mesh(this.pin_geometry, this.pin_material);
+    this.pin_right = new THREE.Mesh(this.pin_geometry, this.pin_material);
+    this.materials.push(this.pin_material);
 
+    this.pin_right.scale.x = this.pin_left.scale.x = 20; 
+    this.pin_right.scale.y = this.pin_left.scale.y = 20;
+    this.pin_right.scale.z = this.pin_left.scale.z = 0.15;
+    this.pin_right.rotation.z = this.pin_left.rotation.z = 0;
+    this.pin_left.rotation.y = 0.0;
+    this.pin_left.rotation.x = -1.5;
+
+    this.pin_right.rotation.y = 1.0;
+
+    this.pin_left.position.set(-225, 65, 0);                
+    this.pin_right.position.set(225, 65, 0);  
+    this.createLighting();
+    
+    this.root.add(this.pin_left);
+    this.root.add(this.pin_right);
+}
 AntiRESlide.prototype.loadResources = function()
 {
     this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
-    this.xor_texture = new THREE.ImageUtils.loadTexture("resources/sleep_xor.png");
+    this.xor_texture = new THREE.ImageUtils.loadTexture("resources/idapinlog.png");
     // Gear Model
     var loader = new THREE.ColladaLoader();
     var that = this;
-    this.pin = new THREE.Object3D();
+    this.pin_left = new THREE.Object3D();
+    this.pin_right = new THREE.Object3D();
     var that = this;
     loader.load("resources/models/pin.dae", function ( collada ) {
         that.dae = collada.scene;
@@ -1110,11 +1219,28 @@ AntiRESlide.prototype.createLighting = function()
     var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
     spot_light2.position.set(250,350,-100);
     this.root.add(spot_light2);
+
+
     // point it to the ground.
     var lightTarget = new THREE.Object3D();
     lightTarget.position.set(0,0,5);
     spot_light.target = lightTarget;
     spot_light2.target = lightTarget;
+
+    // left and right lights
+    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff, true);
+    spot_light3.position.set(250,0,-100);
+    this.root.add(spot_light3);
+    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff, true);
+    spot_light4.position.set(-250,0,100);
+    this.root.add(spot_light4);
+
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,150,5);
+    spot_light3.target = lightTarget;
+    spot_light4.target = lightTarget;
+
+
 }
 
 AntiRESlide.prototype.initAnimations = function()
@@ -1148,13 +1274,14 @@ AntiRESlide.prototype.runAnimation = function(animation)
     this.animate(animation, this.animating);
 }
 
-slides.push(new IntroSlide());
-slides.push(new MyBioSlide());
-slides.push(new PBGamesSlide());
-slides.push(new PunkBusterServicesSlide());
-slides.push(new PnkBstrASlide());
-slides.push(new FnkBstrASlide());
+//slides.push(new IntroSlide());
+//slides.push(new MyBioSlide());
+//slides.push(new PBGamesSlide());
+//slides.push(new PunkBusterServicesSlide());
+//slides.push(new PnkBstrASlide());
+//slides.push(new FnkBstrASlide());
 slides.push(new PnkBstrBSlide());
+slides.push(new DeobfuscateSlide());
 slides.push(new AntiRESlide());
 
 /*
