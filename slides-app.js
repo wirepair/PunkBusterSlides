@@ -375,7 +375,143 @@ SimpleSlide.prototype.initFloorAnimations = function()
     this.animations.push(animatorOut);
 }
 
+SimpleSlide.prototype.moveMeshDown = function(mesh)
+{
+    var down = new Sim.KeyFrameAnimator;
+    down.name = "moveDownAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: m.x, y: m.y-500, z: m.z}, 
+        { x: m.x, y: m.y-1000, z: m.z},
+        { x: m.x, y: m.y-1850, z: m.z}
+    ];
+    
+    var interps = [{keys: keys, values: position_values, target: mesh.position}];
+    down.init({
+        interps: interps,
+        loop: false,
+        duration: 500
+    });
+    return down;
+}
 
+SimpleSlide.prototype.moveMeshSide = function(mesh, z, rotate)
+{
+    var side = new Sim.KeyFrameAnimator;
+    side.name = "moveSideAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: 0,     y: 150, z: 0}, 
+        { x: -150, y: 150, z: -50},
+        { x: -300, y: 150, z: z}
+    ];
+
+    var opacity_values = [
+        { opacity: 1},
+        {opacity: 0.9},
+        {opacity: 0.7}
+    ];
+
+    var interps = [
+        {keys: keys, values: position_values, target: mesh.position},
+        {keys: keys, values: opacity_values, target: mesh.material}
+    ];
+
+    if (rotate)
+    {
+        var rotation_values = [
+            { x: 0, y: 0, z: 0}, 
+            { x: 0, y: 0.05, z: 0.05},
+            { x: 0, y: 0.1, z: 0.10}
+        ];
+        interps.push({keys: keys, values: rotation_values, target: mesh.rotation});
+
+    }
+
+    side.init({
+        interps: interps,
+        loop: false,
+        duration: 500
+    });
+    return side;
+}
+
+SimpleSlide.prototype.moveMeshRightSide = function(mesh, z, rotate)
+{
+    var side = new Sim.KeyFrameAnimator;
+    side.name = "moveSideAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: 0,     y: 150, z: 0}, 
+        { x: 150, y: 150, z: -50},
+        { x: 300, y: 150, z: z}
+    ];
+    
+    var opacity_values = [
+        {opacity: 1},
+        {opacity: 0.9},
+        {opacity: 0.7}
+    ];
+    var interps = [
+        {keys: keys, values: position_values, target: mesh.position},
+        {keys: keys, values: opacity_values, target: mesh.material}
+    ];
+
+    if (rotate)
+    {
+        var rotation_values = [
+            { x: 0, y: 0, z: 0}, 
+            { x: 0, y: 0, z: -0.05},
+            { x: -0.2, y: -0.2, z: -0.2}
+        ];
+        interps.push({keys: keys, values: rotation_values, target: mesh.rotation});
+    }
+
+
+    side.init({
+        interps: interps,
+        loop: false,
+        duration: 500
+    });
+    return side;
+}
+
+
+SimpleSlide.prototype.moveMeshBack = function(mesh, z)
+{
+    var back = new Sim.KeyFrameAnimator;
+    back.name = "moveSideAnimation";
+    var m = mesh.position;
+
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: 0, y: 150, z: -5}, 
+        { x: 0, y: 150, z: -20},
+        { x: 0, y: 150, z: -40}
+    ];
+
+    var opacity_values = [
+        { opacity: 1},
+        {opacity: 0.7},
+        {opacity: 0.5}
+    ];
+    var interps = [
+        {keys: keys, values: position_values, target: mesh.position},
+        {keys: keys, values: opacity_values, target: mesh.material}
+    ];
+    back.init({
+        interps: interps,
+        loop: false,
+        duration: 500
+    });
+    return back;
+}
 /*
  * animate - Called for every animation when a user hits a key. If an animation *is* running
  * already, we stop it and publish the complete event.

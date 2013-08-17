@@ -321,7 +321,7 @@ PunkBusterServicesSlide.prototype.init = function(App)
     
     var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.bfp4f_texture, transparent: true, opacity: 0}); //
     this.materials.push(material);
-    var geometry = new THREE.CubeGeometry(100,150,10);
+    var geometry = new THREE.CubeGeometry(100,150, 10);
     this.bfp4f = new THREE.Mesh(geometry, material);
     this.bfp4f.position.set(250,220,5);
     this.bfp4f.rotation.y =  Math.PI*1.68;
@@ -1038,13 +1038,20 @@ AntiRESlide.prototype.init = function(App)
 
     
     var idapin_geometry = new THREE.PlaneGeometry(300, 300);
-    var idapin_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true, opacity: 1 } );
-    this.materials.push(idapin_material);
-    this.idapin_mesh = new THREE.Mesh( idapin_geometry, idapin_material ); 
+    this.idapin_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true, opacity: 0 } );
+    this.materials.push(this.idapin_material);
+    this.idapin_mesh = new THREE.Mesh( idapin_geometry, this.idapin_material ); 
     this.idapin_mesh.position.y = 100;
     this.idapin_mesh.position.z = 5;
     this.root.add(this.idapin_mesh);
 
+    var netlog_geometry = new THREE.PlaneGeometry(300, 300);
+    this.netlog_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.netlog_texture, transparent: true, opacity: 1 } );
+    this.materials.push(this.netlog_material);
+    this.netlog_mesh = new THREE.Mesh( netlog_geometry, this.netlog_material ); 
+    this.netlog_mesh.position.y = 2000;
+    this.netlog_mesh.position.z = -5;
+    this.root.add(this.netlog_mesh);
     // PIN model
     this.createPinModels();
 
@@ -1052,7 +1059,7 @@ AntiRESlide.prototype.init = function(App)
     this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
     this.floor_texture.repeat.set( 10, 10 );
     // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 1 } );
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
     this.materials.push(floorMaterial);
     var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
     var floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -1065,8 +1072,9 @@ AntiRESlide.prototype.init = function(App)
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFloorAnimations();
+    this.initAnimations();
 }
+
 AntiRESlide.prototype.createPinModels = function()
 {
     this.pin_left = new THREE.Mesh(this.pin_geometry, this.pin_material);
@@ -1093,6 +1101,8 @@ AntiRESlide.prototype.loadResources = function()
 {
     this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
     this.xor_texture = new THREE.ImageUtils.loadTexture("resources/idapinlog.png");
+    this.netlog_texture = new THREE.ImageUtils.loadTexture("resources/netlog.png");
+
     // Gear Model
     var loader = new THREE.ColladaLoader();
     var that = this;
@@ -1140,6 +1150,173 @@ AntiRESlide.prototype.createLighting = function()
     spot_light4.target = lightTarget;
 }
 
+AntiRESlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.name = "fadeIn";
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    this.animations.push(animatorIn);
+
+    var moveback_forward = new Sim.AnimationGroup;
+
+    moveback_forward.name = "moveback_forward";
+    var moveSide = this.moveMeshBack(this.idapin_mesh, -150);
+    moveback_forward.add(moveSide);
+
+    var moveDown = this.moveMeshDown(this.netlog_mesh);
+    moveback_forward.add(moveDown);    
+
+    moveback_forward.init();
+
+    this.addChild(moveback_forward);
+    this.animations.push(moveback_forward);
+    
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.name = "floorAnimatorOut";
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.moveFloorOut(this.root),
+        loop: false,
+        duration: 1000
+    });    
+
+    this.addChild(animatorOut);
+    this.animations.push(animatorOut);
+
+}
+
+/*****************************************************************************/
+/* Decryption Slide                                                          */
+/*****************************************************************************/
+DecryptionSlide = function()
+{
+    this.name = "DecryptionSlide";
+    SimpleSlide.call(this);
+}
+
+DecryptionSlide.prototype = new SimpleSlide();
+
+DecryptionSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
+
+
+
+    var decrypt1_geometry = new THREE.PlaneGeometry(200, 300);
+    this.decrypt1_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.decrypt1_texture, transparent: true, opacity: 0 } );
+    this.materials.push(this.decrypt1_material);
+    this.decrypt1_mesh = new THREE.Mesh( decrypt1_geometry, this.decrypt1_material ); 
+    this.decrypt1_mesh.position.y = 150;
+    this.decrypt1_mesh.position.z = 5;
+    this.root.add(this.decrypt1_mesh);
+
+    var decrypt2_geometry = new THREE.PlaneGeometry(350, 200);
+    this.decrypt2_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.decrypt2_texture, transparent: true, opacity: 0 } );
+    this.materials.push(this.decrypt2_material);
+    this.decrypt2_mesh = new THREE.Mesh( decrypt2_geometry, this.decrypt2_material ); 
+    this.decrypt2_mesh.position.y = 2000;
+    this.decrypt2_mesh.position.z = 5;
+    this.root.add(this.decrypt2_mesh);
+
+    var decrypt3_geometry = new THREE.PlaneGeometry(180, 200);
+    this.decrypt3_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.decrypt3_texture, transparent: true, opacity: 0 } );
+    this.materials.push(this.decrypt3_material);
+    this.decrypt3_mesh = new THREE.Mesh( decrypt3_geometry, this.decrypt3_material ); 
+    this.decrypt3_mesh.position.y = 2000;
+    this.decrypt3_mesh.position.z = 5;
+    this.root.add(this.decrypt3_mesh);
+
+
+
+    this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
+    this.floor_texture.repeat.set( 10, 10 );
+    // Note the change to Lambert material.
+    var floorMaterial = new THREE.MeshBasicMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0} );
+    this.materials.push(floorMaterial);
+    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.y = -0.5;
+    floor.rotation.x = Math.PI / 2;
+    // Note the mesh is flagged to receive shadows
+    //floor.receiveShadow = true;
+    this.root.add(floor);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+DecryptionSlide.prototype.loadResources = function()
+{
+    this.floor_texture = THREE.ImageUtils.loadTexture("resources/code_floor.png");
+    this.decrypt1_texture = THREE.ImageUtils.loadTexture("resources/decrypt1.png");
+    this.decrypt2_texture = THREE.ImageUtils.loadTexture("resources/decrypt2.png");
+    this.decrypt3_texture = THREE.ImageUtils.loadTexture("resources/decrypt3.png");
+}
+
+DecryptionSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.name = "fadeIn";
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    this.animations.push(animatorIn);
+
+    var moveside = new Sim.AnimationGroup;
+
+    moveside.name = "moveside";
+    var moveSide = this.moveMeshSide(this.decrypt1_mesh, -150, true);
+    moveside.add(moveSide);
+
+    var moveDown = this.moveMeshDown(this.decrypt2_mesh);
+    moveside.add(moveDown);    
+
+    moveside.init();
+
+    this.addChild(moveside);
+    this.animations.push(moveside);
+    
+
+    var move_otherside = new Sim.AnimationGroup;
+
+    move_otherside.name = "moveside";
+    var moveRightSide = this.moveMeshRightSide(this.decrypt2_mesh, -150, true);
+    move_otherside.add(moveRightSide);
+
+    var moveDown = this.moveMeshDown(this.decrypt3_mesh);
+    move_otherside.add(moveDown);    
+
+    move_otherside.init();
+
+    this.addChild(move_otherside);
+    this.animations.push(move_otherside);
+    
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.name = "floorAnimatorOut";
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.moveFloorOut(this.root),
+        loop: false,
+        duration: 1000
+    });    
+
+    this.addChild(animatorOut);
+    this.animations.push(animatorOut);
+}
+
+
 /*****************************************************************************/
 /* pbcl hooking info slide                                                   */
 /*****************************************************************************/
@@ -1166,7 +1343,7 @@ PbclHookingSlide.prototype.init = function(App)
 
     // apimon texture
     var geometry = new THREE.PlaneGeometry(350, 265);
-    this.apimon_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.apimon_texture, opacity:1, transparent: true } );
+    this.apimon_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.apimon_texture, opacity: 0, transparent: true } );
     this.apimon_mesh = new THREE.Mesh( geometry, this.apimon_material ); 
     this.materials.push(this.apimon_material);
     this.apimon_mesh.position.set(0, 150, 5);
@@ -1216,10 +1393,10 @@ PbclHookingSlide.prototype.initAnimations = function()
 
     var movein_one = new Sim.AnimationGroup;
     movein_one.name = "PbclMove";
-    var moveSide = this.moveTextureSide(this.apimon_mesh, -150);
+    var moveSide = this.moveMeshSide(this.apimon_mesh, -150, true);
     movein_one.add(moveSide);
 
-    var moveDown = this.moveTextureDown(this.hook_mesh);
+    var moveDown = this.moveMeshDown(this.hook_mesh);
     movein_one.add(moveDown);    
 
     movein_one.init();
@@ -1233,10 +1410,10 @@ PbclHookingSlide.prototype.initAnimations = function()
     var fadeOut = this.fadeOut(this.apimon_mesh);
     movein_two.add(fadeOut);
 
-    var moveSide = this.moveTextureSide(this.hook_mesh, -125);
+    var moveSide = this.moveMeshSide(this.hook_mesh, -125, true);
     movein_two.add(moveSide);
 
-    var moveDown = this.moveTextureDown(this.kick_mesh);
+    var moveDown = this.moveMeshDown(this.kick_mesh);
     movein_two.add(moveDown);    
 
     movein_two.init();
@@ -1272,62 +1449,101 @@ PbclHookingSlide.prototype.fadeOut = function(mesh)
     return fade;  
 
 }
-PbclHookingSlide.prototype.moveTextureSide = function(mesh, z)
+
+/*****************************************************************************/
+/* Preception Slide                                                          */
+/*****************************************************************************/
+
+PreceptionSlide = function()
 {
-    var side = new Sim.KeyFrameAnimator;
-    side.name = "moveSideAnimation";
-    var m = mesh.position;
-    var mr = mesh.rotation;
-    var keys = [0, .25, 1];
-    var position_values = [
-        { x: 0,     y: 150, z: 0}, 
-        { x: -150, y: 150, z: -50},
-        { x: -300, y: 150, z: z}
-    ];
-    var rotation_values = [
-        { x: 0, y: 0, z: 0}, 
-        { x: 0, y: 0.05, z: 0.05},
-        { x: 0, y: 0.1, z: 0.10}
-    ];
-    var opacity_values = [
-        { opacity: 1},
-        {opacity: 0.9},
-        {opacity: 0.7}
-    ];
-    var interps = [
-        {keys: keys, values: position_values, target: mesh.position},
-        {keys: keys, values: rotation_values, target: mesh.rotation},
-        {keys: keys, values: opacity_values, target: mesh.material}
-    ];
-    side.init({
-        interps: interps,
-        loop: false,
-        duration: 500
-    });
-    return side;
+    this.name = "PreceptionSlide";
+    SimpleSlide.call(this);
 }
 
-PbclHookingSlide.prototype.moveTextureDown = function(mesh)
+PreceptionSlide.prototype = new SimpleSlide();
+
+PreceptionSlide.prototype.init = function(App)
 {
-    var down = new Sim.KeyFrameAnimator;
-    down.name = "moveDownAnimation";
-    var m = mesh.position;
-    var mr = mesh.rotation;
-    var keys = [0, .25, 1];
-    var position_values = [
-        { x: m.x, y: m.y-500, z: m.z}, 
-        { x: m.x, y: m.y-1000, z: m.z},
-        { x: m.x, y: m.y-1850, z: m.z}
-    ];
+    SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
+
     
-    var interps = [{keys: keys, values: position_values, target: mesh.position}];
-    down.init({
-        interps: interps,
-        loop: false,
-        duration: 500
-    });
-    return down;
+    this.dirt_texture.magFilter = THREE.NearestFilter;
+    this.dirt_texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+    this.initMineCubes();
+    
+
+    this.grass_texture.wrapS = this.grass_texture.wrapT = THREE.RepeatWrapping; 
+    this.grass_texture.magFilter = THREE.NearestFilter;
+    this.grass_texture.minFilter = THREE.LinearMipMapLinearFilter;
+    this.grass_texture.repeat.set( 64,64 );
+    // Note the change to Lambert material.
+    var floorMaterial = new THREE.MeshBasicMaterial( { map: this.grass_texture, side: THREE.DoubleSide, transparent: true, opacity: 0} );
+    this.materials.push(floorMaterial);
+    var floorGeometry = new THREE.PlaneGeometry(5000, 5000, 50, 50);
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.y = -0.5;
+    floor.rotation.x = Math.PI / 2;
+    // Note the mesh is flagged to receive shadows
+    //floor.receiveShadow = true;
+    this.root.add(floor);
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
 }
+PreceptionSlide.prototype.initMineCubes = function()
+{
+    var original = new THREE.Object3D();
+    var marker = new THREE.Object3D();
+    marker.position.set(-664, 64, -128);
+    original.position.set(-664, 64, -128);
+    this.createCubes(original, marker);
+}
+
+PreceptionSlide.prototype.createCubes = function(original, marker)
+{
+    var wall_height = 8; // in boxes
+    var wall_width = 24;  // in boxes
+    var geometry = new THREE.CubeGeometry(64, 64, 64);
+    var material = new THREE.MeshBasicMaterial({ map: this.dirt_texture, transparent: true, opacity: 0});
+
+    this.materials.push(material);
+
+    var cube_mesh = new THREE.Mesh(geometry, material);
+    cube_mesh.position.set(marker.position.x, marker.position.y, marker.position.z);
+    console.log("Creating cube at " + cube_mesh.position.x);
+    this.root.add(cube_mesh);
+    
+    for (var ny = 0; ny < wall_height; ny++)
+    {
+        for (var nx = 0; nx < wall_width; nx++)
+        {
+            var cube_mesh = new THREE.Mesh(geometry, material);
+            cube_mesh.position.set(marker.position.x, marker.position.y, marker.position.z);
+            console.log("Creating cube at " + cube_mesh.position.x);
+            this.root.add(cube_mesh);
+            marker.position.x += 64;
+        }
+        marker.position.y += 64;
+        marker.position.x = original.position.x;
+    }
+    
+}
+PreceptionSlide.prototype.loadResources = function()
+{
+    this.grass_texture = THREE.ImageUtils.loadTexture("resources/minecraft/grass.png")
+    this.dirt_texture = THREE.ImageUtils.loadTexture("resources/minecraft/dirt.png");
+    this.grass_dirt_texture = THREE.ImageUtils.loadTexture("resources/minecraft/grass_dirt.png");
+
+}
+
+
+/*****************************************************************************/
+/* Ninko Slide                                                               */
+/*****************************************************************************/
 
 
 /*****************************************************************************/
@@ -1361,6 +1577,36 @@ UDPDPSlide.prototype.loadResources = function()
     this.texture = THREE.ImageUtils.loadTexture("resources/isaac.mohawk.png");
 }
 
+
+/*****************************************************************************/
+/* Fake Client Video Slide                                                   */
+/*****************************************************************************/
+
+/*****************************************************************************/
+/* pbcl details Slide                                                        */
+/*****************************************************************************/
+
+
+/*****************************************************************************/
+/* Wiki Slide                                                                */
+/*****************************************************************************/
+
+
+/*****************************************************************************/
+/* TODO Slide                                                                */
+/*****************************************************************************/
+
+
+/*****************************************************************************/
+/* Final Thoughts Slide                                                      */
+/*****************************************************************************/
+
+
+/*****************************************************************************/
+/* TODO Slide                                                                */
+/*****************************************************************************/
+
+
 //slides.push(new IntroSlide());
 //slides.push(new MyBioSlide());
 //slides.push(new PBGamesSlide());
@@ -1370,4 +1616,6 @@ UDPDPSlide.prototype.loadResources = function()
 //slides.push(new PnkBstrBSlide());
 //slides.push(new DeobfuscateSlide());
 //slides.push(new AntiRESlide());
-slides.push(new PbclHookingSlide());
+//slides.push(new DecryptionSlide());
+//slides.push(new PbclHookingSlide());
+slides.push(new PreceptionSlide());
