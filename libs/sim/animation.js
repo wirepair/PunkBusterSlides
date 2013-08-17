@@ -49,6 +49,7 @@ Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 		if (animation.duration >= final_animation.duration)
 		{
 			final_animation = animation;
+			console.log("final_animation now set to: " + animation.name);
 		}
 		animation.parent = this; // safe a reference to the parent so we can call()
 	} while( this.animations.peek() != null );
@@ -59,6 +60,7 @@ Sim.AnimationGroup.prototype.setOnGroupComplete = function()
 		final_animation = this.animations.last();
 	}
 	final_animation.on_group_complete_callback = this.onGroupComplete;	// set our group complete callback.
+	final_animation.on_complete_callback = null; // unset the on complete since the group complete will take over.
 	this.animations.reset();
 
 }
@@ -168,7 +170,7 @@ Sim.Animator = function()
 	Sim.Object.call();
 	this.running = false;
 	this.parent = null; // reference to the group animation if it exists.
-	this.group_complete_callback = null;
+	this.on_group_complete_callback = null;
 }
 
 Sim.Animator.prototype = new Sim.Object();
@@ -409,7 +411,6 @@ Sim.KeyFrameAnimator.prototype.stop = function()
 {
 	this.running = false;
 	console.log("KeyFrameAnimator.stop");
-	//this.publish("complete");
 	this.onComplete();
 }
 

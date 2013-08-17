@@ -2,7 +2,10 @@
 var slides = [];
 
 
-// SLIDE #1
+/*****************************************************************************/
+/* Intro to Punking PunkBuster Slide                                         */
+/*****************************************************************************/
+
 IntroSlide = function()
 {
     this.name = "IntroSlide";
@@ -23,43 +26,19 @@ IntroSlide.prototype.init = function(App)
     this.root.add(mesh);
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initAnimations();
+    this.initFadeAnimations();
 }
-
 
 IntroSlide.prototype.loadResources = function()
 {
     this.texture = THREE.ImageUtils.loadTexture("resources/isaac.mohawk.png");
 }
 
-IntroSlide.prototype.initAnimations = function()
-{
-    var animatorIn = new Sim.KeyFrameAnimator;
-    console.log(this.object3D);
-    animatorIn.init({ 
-        interps: ObjectEffects.prototype.fadeIn(this.material),
-        loop: false,
-        duration: 500
-    });
-    this.addChild(animatorIn); 
-    animatorIn.name = "animatorIn";
-    this.animations.push(animatorIn);
-    var animatorOut = new Sim.KeyFrameAnimator;
-    animatorOut.init({ 
-        interps: ObjectEffects.prototype.fadeOut(this.material),
-        loop: false,
-        duration: 500
-    });    
 
-    this.addChild(animatorOut);
-    animatorOut.name = "animatorOut";
-    this.animations.push(animatorOut);
-}
+/*****************************************************************************/
+/* My Bio Slide                                                              */
+/*****************************************************************************/
 
-
-
-
-// SLIDE #2
 MyBioSlide = function()
 {
     this.name = "MyBioSlide";
@@ -101,36 +80,13 @@ MyBioSlide.prototype.init = function(App)
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initAnimations();
+    this.initFloorAnimations();
 }
 
 MyBioSlide.prototype.loadResources = function()
 {
     this.s_texture = THREE.ImageUtils.loadTexture("resources/seppuku.jpg");
     this.particle_texture = THREE.ImageUtils.loadTexture( 'resources/sakura6.png' );
-}
-
-MyBioSlide.prototype.initAnimations = function()
-{
-    var animatorIn = new Sim.KeyFrameAnimator;
-    animatorIn.name = "MyBioSlideanimatorIn";
-    animatorIn.init({ 
-        interps: ObjectEffects.prototype.moveFloorIn(this.object3D),
-        loop: false,
-        duration: 500
-    });
-    this.addChild(animatorIn); 
-    this.animations.push(animatorIn);
-    var animatorOut = new Sim.KeyFrameAnimator;
-    animatorOut.name = "MyBioSlideanimatorIn";
-    animatorOut.init({ 
-        interps: ObjectEffects.prototype.moveFloorOut(this.object3D),
-        loop: false,
-        duration: 500
-    });    
-
-    this.addChild(animatorOut);
-    this.animations.push(animatorOut);
 }
 
 MyBioSlide.prototype.createParticles = function()
@@ -178,7 +134,10 @@ MyBioSlide.prototype.done = function()
 }
 
 
-// SLIDE #3
+/*****************************************************************************/
+/* Games using PunkBuster Slide                                              */
+/*****************************************************************************/
+
 PBGamesSlide = function()
 {
     this.name = "PBGamesSlide";
@@ -304,7 +263,6 @@ PBGamesSlide.prototype.createFadeIn = function()
 
 PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
 {
-
     var tween_group = [];
     for ( var i = 0; i < objects.length; i ++ ) 
     {
@@ -327,11 +285,10 @@ PBGamesSlide.prototype.moveObjects = function(targets, objects, duration)
     return tweenjs;
 }
 
-//
+/*****************************************************************************/
+/* PunkBuster Services Slide                                                 */
+/*****************************************************************************/
 
-
-
-/* #4 Slide for PunkBuster Services */
 PunkBusterServicesSlide = function()
 {
     this.name = "PunkBusterServicesSlide";
@@ -343,6 +300,9 @@ PunkBusterServicesSlide.prototype = new SimpleSlide();
 PunkBusterServicesSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 500;
  
     this.pnka_position = new THREE.Object3D();
     this.pnka_position.position.set(-250, 220, 5);
@@ -517,13 +477,6 @@ PunkBusterServicesSlide.prototype.createLighting = function()
     this.root.add(lightTarget);
 }
 
-PunkBusterServicesSlide.prototype.runAnimation = function(animation)
-{
-    this.app.camera.position.set(0,150,500);
-    this.animating = !this.animating; // set animating to true.
-    this.animate(animation, this.animating);
-}
-
 PunkBusterServicesSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
@@ -554,7 +507,6 @@ PunkBusterServicesSlide.prototype.initAnimations = function()
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.name = "PunkBusterServicesSlideanimatorOut";
     animatorOut.init({ 
-        //interps: ObjectEffects.prototype.fadeOut(this.materials),
         interps: ObjectEffects.prototype.moveFloorOut(this.root),
         loop: false,
         duration: 500
@@ -604,8 +556,9 @@ PunkBusterServicesSlide.prototype.buildAnimationGroup = function(model, text_mat
     return animation_group;
 }
 
-
-
+/*****************************************************************************/
+/* PnkBstrA Details Slide                                                    */
+/*****************************************************************************/
 
 PnkBstrASlide = function()
 {
@@ -618,6 +571,9 @@ PnkBstrASlide.prototype = new SimpleSlide();
 PnkBstrASlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
 
     this.floor = this.createWireframeFloor(0xff80ff);
     this.floor.position.set(0,20,-400); // move floor a bit back.
@@ -725,19 +681,10 @@ PnkBstrASlide.prototype.initAnimations = function()
     this.animations.push(animatorOut);
 }
 
-PnkBstrASlide.prototype.runAnimation = function(animation)
-{
-    this.app.camera.position.set(0,150,450);
-    this.animating = !this.animating; // set animating to true.
-    this.animate(animation, this.animating);
-}
 
-//
-
-
-
-
-
+/*****************************************************************************/
+/* Funk Buster Slide                                                         */
+/*****************************************************************************/
 FnkBstrASlide = function()
 {
     this.name = "FnkBstrASlide";
@@ -749,7 +696,10 @@ FnkBstrASlide.prototype = new SimpleSlide();
 FnkBstrASlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
-    
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 500;
+
     parameters = { color: 0xffffff, envMap: this.textureCube, shading: THREE.FlatShading };
     cubeMaterial = new THREE.MeshBasicMaterial( parameters );
     this.materials.push(cubeMaterial)
@@ -800,7 +750,6 @@ FnkBstrASlide.prototype.loadResources = function()
 
 FnkBstrASlide.prototype.createLighting = function()
 {
-    
     this.spotlights = [];
     for (var i = 0; i < 20; i++)
     {
@@ -875,12 +824,6 @@ FnkBstrASlide.prototype.initAnimations = function()
     this.animations.push(animatorOut);
 }
 
-FnkBstrASlide.prototype.runAnimation = function(animation)
-{
-    this.app.camera.position.set(0,150,500);
-    this.animating = !this.animating; // set animating to true.
-    this.animate(animation, this.animating);
-}
 
 
 FnkBstrASlide.prototype.update = function()
@@ -908,11 +851,12 @@ FnkBstrASlide.prototype.update = function()
     }
 
 }
-//
 
-/******************/
-/* PNKBSTRB Slide */
-/******************/
+
+/*****************************************************************************/
+/* PnkBstrB Details Slide                                                    */
+/*****************************************************************************/
+
 PnkBstrBSlide = function()
 {
     this.name = "PnkBstrBSlide";
@@ -924,6 +868,9 @@ PnkBstrBSlide.prototype = new SimpleSlide();
 PnkBstrBSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
 
     this.floor = this.createWireframeFloor(0x81BEF7);
     this.floor.position.set(0,20,-400); // move floor a bit back.
@@ -954,7 +901,7 @@ PnkBstrBSlide.prototype.init = function(App)
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initAnimations();
+    this.initFloorAnimations();
 }
 
 PnkBstrBSlide.prototype.loadResources = function()
@@ -969,7 +916,7 @@ PnkBstrBSlide.prototype.createHeading = function(text, position)
                         position.position.y,
                         position.position.z);
     console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
-    object.material.opacity = 0;
+    object.material.opacity = 1;
     this.materials.push(object.material);
     return object;
 }
@@ -981,43 +928,16 @@ PnkBstrBSlide.prototype.createTextObject = function(text, position, x, y, z)
                         position.position.y + y,
                         position.position.z + z);
     console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
-    object.material.opacity = 0;
+    object.material.opacity = 1;
     this.materials.push(object.material);
 
     return object;
 }
 
-PnkBstrBSlide.prototype.initAnimations = function()
-{
-    var animatorIn = new Sim.KeyFrameAnimator;
-    animatorIn.init({ 
-        interps: ObjectEffects.prototype.fadeIn(this.materials),
-        loop: false,
-        duration: 500
-    });
-    this.addChild(animatorIn); 
-    animatorIn.name = "animatorIn";
-    this.animations.push(animatorIn);
 
-    var animatorOut = new Sim.KeyFrameAnimator;
-    animatorOut.init({ 
-        interps: ObjectEffects.prototype.fadeOut(this.materials),
-        loop: false,
-        duration: 500
-    });    
-
-    this.addChild(animatorOut);
-    animatorOut.name = "animatorOut";
-    this.animations.push(animatorOut);
-}
-
-PnkBstrBSlide.prototype.runAnimation = function(animation)
-{
-    this.app.camera.position.set(0,150,450);
-    this.animating = !this.animating; // set animating to true.
-    this.animate(animation, this.animating);
-}
-
+/*****************************************************************************/
+/* Deobfuscation Video Slide                                                 */
+/*****************************************************************************/
 
 DeobfuscateSlide = function()
 {
@@ -1031,6 +951,10 @@ DeobfuscateSlide.prototype = new SimpleSlide();
 DeobfuscateSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 1500;
+
     this.floor = this.createDottedFloor();
     this.floor.position.set(0,-200,-200); // move floor a bit back.
     this.root.add(this.floor);
@@ -1063,23 +987,6 @@ DeobfuscateSlide.prototype.init = function(App)
     this.initAnimations();
 }
 
-/*
-DeobfuscateSlide.prototype.update = function()
-{
-    Sim.Object.prototype.update.call(this);
-    if ( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) 
-    {
-
-        this.imageContext.drawImage( this.video, 0, 0 );
-
-        if ( this.video_texture ) 
-        {
-            this.video_texture.needsUpdate = true;
-        }
-    }
-}
-*/
-
 DeobfuscateSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
@@ -1110,15 +1017,9 @@ DeobfuscateSlide.prototype.initAnimations = function()
     this.animations.push(animatorOut);
 }
 
-DeobfuscateSlide.prototype.runAnimation = function(animation)
-{
-    this.app.camera.position.set(0,150,2000);
-    this.animating = !this.animating; // set animating to true.
-    this.animate(animation, this.animating);
-}
-
-
-
+/*****************************************************************************/
+/* Anti Reversing Slide                                                      */
+/*****************************************************************************/
 
 AntiRESlide = function()
 {
@@ -1131,10 +1032,13 @@ AntiRESlide.prototype = new SimpleSlide();
 AntiRESlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
 
     
     var idapin_geometry = new THREE.PlaneGeometry(300, 300);
-    var idapin_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true, opacity: 0 } );
+    var idapin_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.xor_texture, transparent: true, opacity: 1 } );
     this.materials.push(idapin_material);
     this.idapin_mesh = new THREE.Mesh( idapin_geometry, idapin_material ); 
     this.idapin_mesh.position.y = 100;
@@ -1148,7 +1052,7 @@ AntiRESlide.prototype.init = function(App)
     this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
     this.floor_texture.repeat.set( 10, 10 );
     // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 1 } );
     this.materials.push(floorMaterial);
     var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
     var floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -1161,7 +1065,7 @@ AntiRESlide.prototype.init = function(App)
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initAnimations();
+    this.initFloorAnimations();
 }
 AntiRESlide.prototype.createPinModels = function()
 {
@@ -1199,14 +1103,9 @@ AntiRESlide.prototype.loadResources = function()
         that.dae = collada.scene;
         skin = collada.skins[ 0 ];
 
-        //that.dae.position.x = 250;
-        //that.dae.position.y = 220;
-        //that.dae.position.z = 5;
-        // set the model to the center so we can rotate it properly.
-        //that.dae.children[0].position.set(0,0,0); 
         that.dae.updateMatrix();
         that.pin_geometry = that.dae.children[ 0 ].geometry;
-        that.pin_material = that.dae.children[ 0 ].material;        
+        that.pin_material = that.dae.children[ 0 ].material;      
     });
 }
 
@@ -1228,10 +1127,10 @@ AntiRESlide.prototype.createLighting = function()
     spot_light2.target = lightTarget;
 
     // left and right lights
-    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff, true);
+    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff);
     spot_light3.position.set(250,0,-100);
     this.root.add(spot_light3);
-    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff, true);
+    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff);
     spot_light4.position.set(-250,0,100);
     this.root.add(spot_light4);
 
@@ -1239,11 +1138,70 @@ AntiRESlide.prototype.createLighting = function()
     lightTarget.position.set(0,150,5);
     spot_light3.target = lightTarget;
     spot_light4.target = lightTarget;
-
-
 }
 
-AntiRESlide.prototype.initAnimations = function()
+/*****************************************************************************/
+/* pbcl hooking info slide                                                   */
+/*****************************************************************************/
+
+PbclHookingSlide = function()
+{
+    this.name = "PbclHookingSlide";
+    SimpleSlide.call(this);
+}
+
+PbclHookingSlide.prototype = new SimpleSlide();
+
+PbclHookingSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
+
+    // floor
+    this.floor = this.createDottedFloor(0xff80ff);
+    this.floor.position.set(0,-200,-200); // move floor a bit back.
+    this.root.add(this.floor);
+
+    // apimon texture
+    var geometry = new THREE.PlaneGeometry(350, 265);
+    this.apimon_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.apimon_texture, opacity:1, transparent: true } );
+    this.apimon_mesh = new THREE.Mesh( geometry, this.apimon_material ); 
+    this.materials.push(this.apimon_material);
+    this.apimon_mesh.position.set(0, 150, 5);
+    this.root.add(this.apimon_mesh);
+
+
+    var geometry = new THREE.PlaneGeometry(500, 250);
+    this.hook_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.pbclhook_texture, opacity: 1, transparent: true } );
+    this.materials.push(this.hook_material);
+
+    this.hook_mesh = new THREE.Mesh( geometry, this.hook_material ); 
+    this.hook_mesh.position.set(0, 2000, 5);
+    this.root.add(this.hook_mesh);
+
+    var geometry = new THREE.PlaneGeometry(350, 300);
+    this.kick_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.kick_texture, opacity: 1, transparent: true } );
+    this.materials.push(this.kick_material);
+
+    this.kick_mesh = new THREE.Mesh( geometry, this.kick_material ); 
+    this.kick_mesh.position.set(0, 2000, 5);
+    this.root.add(this.kick_mesh);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+PbclHookingSlide.prototype.loadResources = function()
+{
+    this.apimon_texture = THREE.ImageUtils.loadTexture("resources/apimon.png");
+    this.pbclhook_texture = THREE.ImageUtils.loadTexture("resources/pbcl.cb.apimon.png");
+    this.kick_texture = THREE.ImageUtils.loadTexture("resources/pnk_kick2.png");
+}
+
+PbclHookingSlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
     animatorIn.init({ 
@@ -1254,6 +1212,37 @@ AntiRESlide.prototype.initAnimations = function()
     this.addChild(animatorIn); 
     animatorIn.name = "animatorIn";
     this.animations.push(animatorIn);
+
+
+    var movein_one = new Sim.AnimationGroup;
+    movein_one.name = "PbclMove";
+    var moveSide = this.moveTextureSide(this.apimon_mesh, -150);
+    movein_one.add(moveSide);
+
+    var moveDown = this.moveTextureDown(this.hook_mesh);
+    movein_one.add(moveDown);    
+
+    movein_one.init();
+    this.animations.push(movein_one);
+    this.addChild(movein_one);
+
+
+    var movein_two = new Sim.AnimationGroup;
+    movein_two.name = "PbclMoveTwo";
+    
+    var fadeOut = this.fadeOut(this.apimon_mesh);
+    movein_two.add(fadeOut);
+
+    var moveSide = this.moveTextureSide(this.hook_mesh, -125);
+    movein_two.add(moveSide);
+
+    var moveDown = this.moveTextureDown(this.kick_mesh);
+    movein_two.add(moveDown);    
+
+    movein_two.init();
+    this.animations.push(movein_two);
+    this.addChild(movein_two);
+
 
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.init({ 
@@ -1266,12 +1255,110 @@ AntiRESlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-
-AntiRESlide.prototype.runAnimation = function(animation)
+PbclHookingSlide.prototype.fadeOut = function(mesh)
 {
-    this.app.camera.position.set(0,150,450);
-    this.animating = !this.animating; // set animating to true.
-    this.animate(animation, this.animating);
+    var fade = new Sim.KeyFrameAnimator;
+    var keys = [0, 0.25, 1];
+    var opacity_values = [
+        {opacity: 0.7},
+        {opacity: 0.3},
+        {opacity: 0}
+    ];
+    fade.init({ 
+        interps: [{keys: keys, values: opacity_values, target: mesh.material}],
+        loop: false,
+        duration: 500
+    });
+    return fade;  
+
+}
+PbclHookingSlide.prototype.moveTextureSide = function(mesh, z)
+{
+    var side = new Sim.KeyFrameAnimator;
+    side.name = "moveSideAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: 0,     y: 150, z: 0}, 
+        { x: -150, y: 150, z: -50},
+        { x: -300, y: 150, z: z}
+    ];
+    var rotation_values = [
+        { x: 0, y: 0, z: 0}, 
+        { x: 0, y: 0.05, z: 0.05},
+        { x: 0, y: 0.1, z: 0.10}
+    ];
+    var opacity_values = [
+        { opacity: 1},
+        {opacity: 0.9},
+        {opacity: 0.7}
+    ];
+    var interps = [
+        {keys: keys, values: position_values, target: mesh.position},
+        {keys: keys, values: rotation_values, target: mesh.rotation},
+        {keys: keys, values: opacity_values, target: mesh.material}
+    ];
+    side.init({
+        interps: interps,
+        loop: false,
+        duration: 500
+    });
+    return side;
+}
+
+PbclHookingSlide.prototype.moveTextureDown = function(mesh)
+{
+    var down = new Sim.KeyFrameAnimator;
+    down.name = "moveDownAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: m.x, y: m.y-500, z: m.z}, 
+        { x: m.x, y: m.y-1000, z: m.z},
+        { x: m.x, y: m.y-1850, z: m.z}
+    ];
+    
+    var interps = [{keys: keys, values: position_values, target: mesh.position}];
+    down.init({
+        interps: interps,
+        loop: false,
+        duration: 500
+    });
+    return down;
+}
+
+
+/*****************************************************************************/
+/* UDP Decrypting Proxy Slide                                                */
+/*****************************************************************************/
+UDPDPSlide = function()
+{
+    this.name = "UDPDPSlide";
+    SimpleSlide.call(this);
+}
+
+UDPDPSlide.prototype = new SimpleSlide();
+
+UDPDPSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    this.root = new THREE.Object3D();
+    var geometry = new THREE.PlaneGeometry(3.337, 3);
+
+    this.material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.texture, transparent: true } );
+    var mesh = new THREE.Mesh( geometry, this.material ); 
+    this.root.add(mesh);
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+UDPDPSlide.prototype.loadResources = function()
+{
+    this.texture = THREE.ImageUtils.loadTexture("resources/isaac.mohawk.png");
 }
 
 //slides.push(new IntroSlide());
@@ -1280,74 +1367,7 @@ AntiRESlide.prototype.runAnimation = function(animation)
 //slides.push(new PunkBusterServicesSlide());
 //slides.push(new PnkBstrASlide());
 //slides.push(new FnkBstrASlide());
-slides.push(new PnkBstrBSlide());
-slides.push(new DeobfuscateSlide());
-slides.push(new AntiRESlide());
-
-/*
-
-    loader.load.call(this, "resources/models/Gear-Handmade.dae", function ( collada ) {
-
-                that.dae = collada.scene;
-                skin = collada.skins[ 0 ];
-
-                that.dae.scale.x = that.dae.scale.y = that.dae.scale.z = 25;
-                that.dae.position.x = 250;
-                that.dae.position.y = 220;
-                that.dae.position.z = 5;
-                // set the model to the center so we can rotate it properly.
-                that.dae.children[0].position.set(0,0,0); 
-                that.dae.updateMatrix();
-                 //that.dae.children[0].opacity = 0;
-                that.pba_gear = that.dae.clone(); //new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
-                that.pbb_gear = that.dae.clone(); //new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
-                
-                that.pbb_gear.position.set(-250, 220, 5);
-
-                that.pbcl_gear = that.dae.clone();//new THREE.Mesh( that.dae.children[0].geometry, that.dae.children[0].material );
-
-                for (var i = 0; i < that.dae.children[0].material.materials.length; i++)
-                {
-                   that.dae.children[0].material.materials[i].transparent = true;
-                   that.dae.children[0].material.materials[i].opacity = 0;
-                   // clone materials too
-                   that.pba_gear.children[0].material.materials[i] = that.dae.children[0].material.materials[i].clone();
-                   that.pbb_gear.children[0].material.materials[i] = that.dae.children[0].material.materials[i].clone();
-                   that.pbcl_gear.children[0].material.materials[i] = that.dae.children[0].material.materials[i].clone();
-
-                }
-               
-                that.root.add(that.pba_gear);
-                that.root.add(that.pbb_gear);
-                that.root.add(that.pbcl_gear);
-                // must init our animations after model has loaded here.
-                that.initAnimations.call(that);
-    });
-
-*/
-
-
-
-
-
-    // Sphere.
-    /*
-    var vector = new THREE.Vector3();
-    for ( var i = 0, l = this.image_objects.length; i < l; i++) 
-    {
-        var phi = Math.acos( -1 + ( 2 * i ) / l );
-        var theta = Math.sqrt( l * Math.PI ) * phi;
-
-        var object = new THREE.Object3D();
-
-        object.position.x = 10 * Math.cos( theta ) * Math.sin( phi );
-        object.position.y = 10 * Math.sin( theta ) * Math.sin( phi );
-        object.position.z = 10 * Math.cos( phi );
-
-        vector.copy( object.position ).multiplyScalar( 2 );
-
-        object.lookAt( vector );
-        this.targets.sphere.push( object );
-
-    }
-    */
+//slides.push(new PnkBstrBSlide());
+//slides.push(new DeobfuscateSlide());
+//slides.push(new AntiRESlide());
+slides.push(new PbclHookingSlide());

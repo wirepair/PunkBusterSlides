@@ -55,8 +55,20 @@ SlidesApp.prototype.slideComplete = function()
 
 SlidesApp.prototype.goto = function(index)
 {
-    this.slides.get(index); // update index
-    this.nextSlide();
+    var idx = index-1;
+    console.log("Going to " + idx);
+    var slide;
+    if (this.slides.current() != null)
+    {
+        var current = this.slides.current();
+        current.done();
+        this.removeObject(current);
+    }
+    slide = this.slides.get(idx); // update index
+    console.log("==============================" + slide.name);
+    slide.init(this);
+    this.addObject(slide);
+    slide.go();
 }
 /*
  * nextSlide - Checks if we are at the the end of the slide deck.
@@ -139,12 +151,6 @@ SlidesApp.prototype.handleKeyDown = function(keyCode, charCode)
     slide.handleKeyDown.call(slide, keyCode, charCode);
 }
 
-//SlidesApp.prototype.onAnimationComplete = function()
-//{
-    //console.log("SlidesApp.onAnimationComplete complete.");
-//}
-
-
 /*
  * update - Called for every render tick propgates to the
  * Sim.Object which iterates over every object currently set
@@ -172,8 +178,7 @@ SimpleSlide.prototype.init = function(App)
     this.app = App; // save a ref to our app.
     this.animations = new Queue();
     this.animating = false; // is the slide currently running an animation?
-    this.reloaded = false;  // has the slide been reloaded (via previousSlide)?
-
+   
     // Default camera positions. Modify values in the setCamera method
     this.camera_pos = new Object();
     this.camera_pos.x = 0;
@@ -189,9 +194,9 @@ SimpleSlide.prototype.loadResources = function()
     // use this method to load individual resources.
 }
 /*
- * go - Called by our app container during nextSlide. Sets the object3d visible if 
- * we were 'reloaded'. Resets animations back to their beginning. Also sets up
- * subscribers to notify the container app if it needs to go to the previous slide
+ * go - Called by our app container during nextSlide. Sets the object3d to visible. 
+ * Resets animations back to their beginning. Also sets up subscribers
+ * to notify the container app if it needs to go to the previous slide
  * or the next slide. Previous slides are called if the user hits the left arrow
  * and we are currently at the beginning of our animation queue. Likewise,
  * next slide is called when we are at the end of our animation queue.
@@ -208,9 +213,7 @@ SimpleSlide.prototype.go = function()
     }
     console.log("go called.");
     this.animations.reset();
-    // Register subscribers to our 'app'
-    //this.subscribe("slide_next", this.app, this.app.slideComplete);
-    //this.subscribe("slide_previous", this.app, this.app.previousSlide);
+
     g_publisher.subscribe("slide_next", this.app, this.app.slideComplete);
     g_publisher.subscribe("slide_previous", this.app, this.app.previousSlide);
     this.nextAnimation();
@@ -229,7 +232,6 @@ SimpleSlide.prototype.done = function()
     this.app.reset();
 
     // delete old references.
-    //this.object3D = null;
     this.root = null;
     this.materials = null;
     this.animations = null;
@@ -239,7 +241,6 @@ SimpleSlide.prototype.done = function()
 
 /*
  * create2dText - Creates text by creating a 2d canvas and maps it as a Texture.
- * TODO: Add parameters so callers can modify text color/size etc.
  */
 SimpleSlide.prototype.create2dText = function(the_text, size, width, height, align)
 {
@@ -270,6 +271,10 @@ SimpleSlide.prototype.create2dText = function(the_text, size, width, height, ali
 
     return mesh;
 }
+/*
+ * Create's a TRONish wireframe floor.
+ * @param color - RBG color value, default is white.
+ */
 SimpleSlide.prototype.createWireframeFloor = function(color)
 {
     var color = color || 0xffffff
@@ -289,7 +294,18 @@ SimpleSlide.prototype.createWireframeFloor = function(color)
     var line = new THREE.Line( geometry, material, THREE.LinePieces );
     return line;
 }
-SimpleSlide.prototype.createDottedFloor = function(coords, color, texture)
+/*
+ * createDottedFloor - Creates a plane and maps a particle system to each vertex
+ * of the geometry.
+ *
+ * @param color - The color to map to the texture
+ * @param coords - An array of 4 values width/height, segmentsWidth, segmentsHeight
+ * more segments == more particles.
+ * @param texture - the texture to use for the particles, default is a disc. 
+ *
+ * @returns the floor particle system.
+ */
+SimpleSlide.prototype.createDottedFloor = function(color, coords, texture)
 {
     var coords = coords || [4000,4000,10,10];
     var color = color || 0xD8D8D8;
@@ -313,10 +329,57 @@ SimpleSlide.prototype.setCamera = function()
     this.app.camera.position.set(this.camera_pos.x, this.camera_pos.y, this.camera_pos.z);
 }
 
+SimpleSlide.prototype.initFadeAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.material),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.material),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+SimpleSlide.prototype.initFloorAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.name = "floorAnimatorIn";
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.moveFloorIn(this.object3D),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    this.animations.push(animatorIn);
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.name = "floorAnimatorOut";
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.moveFloorOut(this.object3D),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    this.animations.push(animatorOut);
+}
+
+
 /*
  * animate - Called for every animation when a user hits a key. If an animation *is* running
  * already, we stop it and publish the complete event.
- * @params animation - An animation (Sim.KeyFrameAnimator)
+ * @params animation - An animation (Sim.Animator or it's subclasses.)
  * @params on - boolean if running or not. (this.animating).
  *
  * @calls animation.start() or stop()
@@ -329,7 +392,7 @@ SimpleSlide.prototype.animate = function(animation, on)
 }
 
 /*
- * onAnimateComplete - Called when an animation completes. Reset's our is animating flag.
+ * onAnimateComplete - Called when an animation completes. Resets our is animating flag.
  * We have to get a reference to the animation that just completed to unsubscribe it's
  * complete message handler. 
  *
@@ -343,17 +406,12 @@ SimpleSlide.prototype.onAnimationComplete = function()
     if (this.animations == null)
         return;
     var animation = this.animations.current();
-    // really irritating, "complete" must be set in animations context, due to the animation calling publish("complete")
-    // but 'this' has to be set to our Slide.
-    //this.unsubscribe.call(animation, "complete", this);
     g_publisher.unsubscribe("complete", this);
-    //console.log(this.name + ".onAnimationComplete complete index: " + this.animations.getIndex());
     
     if (this.animations.isEnd())
     {
         console.log("all animations complete:" + this.name);
         console.log("-------------------------------------------------------> PUBLISH SLIDE NEXT");
-        //this.publish("slide_next");
         g_publisher.publish("slide_next");
     }  
 }
@@ -361,7 +419,7 @@ SimpleSlide.prototype.onAnimationComplete = function()
 /*
  * nextAnimation - Called on start of slide or when a user hits the right arrow key.
  * Subscribes to the complete message so we can be signaled when the animation completes.
- * Then simply starts the animation.
+ * Then starts the animation.
  *
  *
  * @calls - runAnimation
@@ -410,6 +468,7 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
             else
             {
                 // stop current animation.
+                // BREAKS STUFF SO DISABLED FOR NOW.
                 //this.animate(this.animations.current(), this.animating);
                 //g_publisher.publish("slide_previous");
             }
@@ -419,22 +478,11 @@ SimpleSlide.prototype.handleKeyDown = function(keyCode, charCode)
             {
                 if (this.animating == false)
                 {
-                    //this.publish("slide_next");
                     g_publisher.publish("slide_next");
-                }
-                else
-                {
-                    console.log("ANIMATING BUT GO TO NEXT?");
-                    //this.animate(this.animations.current(), this.animating);
                 }
             }
             else
             {
-                //if (this.animating == true)
-                //{
-                //    this.animate(this.animations.current(), this.animating);
-                //}
-                console.log("this.animating is..." + this.animating);
                 if (this.animating == false)
                 {
                     this.nextAnimation();
@@ -470,14 +518,11 @@ SimpleSlide.prototype.unsubscribeListeners = function()
 
 SimpleSlide.prototype.previousSlide = function()
 {
-    //console.log("SimpleSlide.previousSlide publish");
     this.object3D.visibility = false;
 }
 
 SimpleSlide.prototype.nextSlide = function()
 {
-    //console.log("SimpleSlide.nextSlide publish");
-    //this.publish("slide_next");
 }
 
 

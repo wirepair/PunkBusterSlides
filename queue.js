@@ -29,6 +29,7 @@ Queue.prototype.peek = function()
 
 Queue.prototype.get = function(index)
 {
+    this.index = index;
     this._current = this.list[this.index];
     return this._current; 
 }
