@@ -40,7 +40,7 @@ var TWEEN = TWEEN || ( function () {
 		remove: function ( tween ) {
 
 			var i = _tweens.indexOf( tween );
-
+			console.log("Removing tween " + tween.name);
 			if ( i !== -1 ) {
 
 				_tweens.splice( i, 1 );

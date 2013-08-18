@@ -1469,9 +1469,47 @@ PreceptionSlide.prototype.init = function(App)
     this.camera_pos.y = 150;
     this.camera_pos.z = 450;
 
+    this.point_marker = new THREE.Object3D();
+    this.point_marker.position.x = 0;
+    this.point_marker.position.y = 128;
+    this.point_marker.position.z = -128;
+    this.root.add(this.point_marker);
+    // look at the created object so we can move it around and have the camera follow it.
+    this.app.camera.lookAt(this.point_marker.position);
     
+    // give it that blocky look
     this.dirt_texture.magFilter = THREE.NearestFilter;
     this.dirt_texture.minFilter = THREE.LinearMipMapLinearFilter;
+    
+    this.grass_dirt_texture.magFilter = THREE.NearestFilter;
+    this.grass_dirt_texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+
+
+    this.plane_materials = [
+        new THREE.MeshBasicMaterial( { map: this.goal_texture,  transparent: true, opacity: 0} ),
+        new THREE.MeshBasicMaterial({map: this.goal_texture, transparent: true, opacity: 0})
+    ];
+
+    var geometry1 = new THREE.PlaneGeometry(300, 200);
+    var geometry2 = new THREE.PlaneGeometry(300, 200);
+    // rotate
+    geometry2.applyMatrix( new THREE.Matrix4().makeRotationY( Math.PI ) );
+    // merge the two planes
+    THREE.GeometryUtils.merge( geometry1, geometry2);
+    // set the faces 
+    geometry1.materials = this.plane_materials;
+    geometry1.faces[ 0 ].materialIndex = 0;
+    geometry1.faces[ 1 ].materialIndex = 1;
+        
+    var goal_mesh =  new THREE.Mesh( geometry1, new THREE.MeshFaceMaterial(this.plane_materials) );
+    goal_mesh.position.set(32, 592, -64);
+    this.materials.push(this.plane_materials[0]);
+    this.materials.push(this.plane_materials[1]);
+
+
+    this.root.add(goal_mesh);
+
 
     this.initMineCubes();
     
@@ -1492,43 +1530,57 @@ PreceptionSlide.prototype.init = function(App)
     this.root.add(floor);
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFadeAnimations();
+    this.initAnimations();
 }
 PreceptionSlide.prototype.initMineCubes = function()
 {
     var original = new THREE.Object3D();
     var marker = new THREE.Object3D();
-    marker.position.set(-664, 64, -128);
-    original.position.set(-664, 64, -128);
+    marker.position.set(-664, 0, -128);
+    original.position.set(-664, 0, -128);
     this.createCubes(original, marker);
 }
 
 PreceptionSlide.prototype.createCubes = function(original, marker)
 {
     var wall_height = 8; // in boxes
-    var wall_width = 24;  // in boxes
+    var wall_length = 24;  // in boxes
+    var wall_width = 8;
     var geometry = new THREE.CubeGeometry(64, 64, 64);
     var material = new THREE.MeshBasicMaterial({ map: this.dirt_texture, transparent: true, opacity: 0});
-
+    var top_material = new THREE.MeshBasicMaterial({ map: this.grass_dirt_texture, transparent: true, opacity: 0});
     this.materials.push(material);
-
+    this.materials.push(top_material);
     var cube_mesh = new THREE.Mesh(geometry, material);
     cube_mesh.position.set(marker.position.x, marker.position.y, marker.position.z);
-    console.log("Creating cube at " + cube_mesh.position.x);
     this.root.add(cube_mesh);
-    
-    for (var ny = 0; ny < wall_height; ny++)
+    for (var nz = 0; nz < wall_width; nz++)
     {
-        for (var nx = 0; nx < wall_width; nx++)
+        for (var ny = 0; ny < wall_height; ny++)
         {
-            var cube_mesh = new THREE.Mesh(geometry, material);
-            cube_mesh.position.set(marker.position.x, marker.position.y, marker.position.z);
-            console.log("Creating cube at " + cube_mesh.position.x);
-            this.root.add(cube_mesh);
-            marker.position.x += 64;
+            for (var nx = 0; nx < wall_length; nx++)
+            {
+                var cube_mesh;
+                if (ny == wall_height-1)
+                {
+                    cube_mesh = new THREE.Mesh(geometry, top_material);    
+                }
+                else
+                {
+                    cube_mesh = new THREE.Mesh(geometry, material);
+                }
+
+                cube_mesh.position.set(marker.position.x, marker.position.y, marker.position.z);
+                //console.log("Creating cube at " + cube_mesh.position.x + " " + cube_mesh.position.y + " " + cube_mesh.position.z);
+                this.root.add(cube_mesh);
+                marker.position.x += 64;
+            }
+            marker.position.y += 64;
+            marker.position.x = original.position.x;
         }
-        marker.position.y += 64;
-        marker.position.x = original.position.x;
+        wall_height -= 1;
+        marker.position.z -= 64;
+        marker.position.y = original.position.y;        
     }
     
 }
@@ -1537,9 +1589,97 @@ PreceptionSlide.prototype.loadResources = function()
     this.grass_texture = THREE.ImageUtils.loadTexture("resources/minecraft/grass.png")
     this.dirt_texture = THREE.ImageUtils.loadTexture("resources/minecraft/dirt.png");
     this.grass_dirt_texture = THREE.ImageUtils.loadTexture("resources/minecraft/grass_dirt.png");
+    this.goal_texture = THREE.ImageUtils.loadTexture("resources/goal.png");
 
 }
 
+PreceptionSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var lookUp = this.look(0, 400, 0);
+    this.animations.push(lookUp); 
+    this.addChild(lookUp);
+
+    var lookMove = new Sim.AnimationGroup;
+    lookMove.name = "LookAndMove";
+    
+    // look at end of wall
+    var lookRight = this.look(905, 128, 0);
+    lookMove.add(lookRight);
+
+    // move to end of wall
+    var moveRight = this.move(900, 128, 0);
+    lookMove.add(moveRight);
+
+
+    var lookLeftOnce = this.look(900, 128, -1510);
+    lookMove.add(lookLeftOnce);
+
+    var moveForward = this.move(900, 128, -1500);
+    lookMove.add(moveForward);
+
+    var lookLeft = this.look(400, 128, -1000);
+    lookMove.add(lookLeft);
+    
+
+    var moveForward = this.move(300, 128, -1500);
+    lookMove.add(moveForward);
+
+    var lookCenter = this.look(250, 400, 0);
+    lookMove.add(lookCenter);
+    lookMove.init({isChain:true});
+    this.animations.push(lookMove);
+    this.addChild(lookMove);
+   
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+PreceptionSlide.prototype.look = function(x, y, z)
+{
+    var tweenjs = new Sim.TweenjsAnimator;
+    tweenjs.name = "look " + x + " " + y + " " + z;
+    var tween = new TWEEN.Tween( this.point_marker.position )
+            .to( { x: x, y: y, z: z }, 1500 )
+            .easing( TWEEN.Easing.Exponential.InOut );
+    tween.name = "look " + x + " " + y + " " + z;
+    tweenjs.init({tweens: [tween], duration: 1500 }); 
+    return tweenjs;
+}
+
+PreceptionSlide.prototype.move = function(x, y, z)
+{
+    var tweenjs = new Sim.TweenjsAnimator;
+    tweenjs.name = "look " + x + " " + y + " " + z;
+    var tween = new TWEEN.Tween( this.app.camera.position )
+            .to( { x: x, y: y, z: z }, 1500 );
+    tween.name = "look " + x + " " + y + " " + z;
+    tweenjs.init({tweens: [tween], duration: 1500 }); 
+    return tweenjs;
+}
+
+// need to override update so we can force the camera to look at specific positions.
+PreceptionSlide.prototype.update = function()
+{
+    Sim.Object.prototype.update.call(this);
+    this.app.camera.lookAt(this.point_marker.position);
+}
 
 /*****************************************************************************/
 /* Ninko Slide                                                               */
@@ -1603,7 +1743,7 @@ UDPDPSlide.prototype.loadResources = function()
 
 
 /*****************************************************************************/
-/* TODO Slide                                                                */
+/* Thanks/Credits Slide                                                      */
 /*****************************************************************************/
 
 

@@ -123,7 +123,6 @@ Sim.AnimationGroup.prototype.update = function()
 
 	if (this.isChain)
 	{
-		console.log("Updating current animation.");
 		var animation = this.animations.current();
 		animation.update();
 		return;
@@ -282,6 +281,56 @@ Sim.VideoAnimator.prototype.update = function()
 }
 
 
+// Used for animating pathing/looking.
+/*
+Sim.ControlAnimator = function()
+{
+	Sim.Animator.call();
+}
+
+Sim.ControlAnimator.prototype = new Sim.Animator;
+
+Sim.ControlAnimator.prototype.init = function(param)
+{
+	param = param || {};
+	this.waypoints = param.waypoints;
+	this.duration = param.duration;
+
+
+}
+
+Sim.ControlAnimator.prototype.start = function()
+{
+	if (this.running)
+		return;
+
+	console.log("calling start in ControlAnimator");
+	this.video.play();
+	this.running = true;
+}
+
+Sim.ControlAnimator.prototype.stop = function()
+{
+	this.running = false;
+	console.log("ControlAnimator.stop");
+	this.video.stop();
+	this.onComplete();
+}
+
+Sim.ControlAnimator.prototype.update = function()
+{
+	if ( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) 
+    {
+
+        this.image_context.drawImage( this.video, 0, 0 );
+
+        if ( this.video_texture ) 
+        {
+            this.video_texture.needsUpdate = true;
+        }
+    }
+}
+*/
 
 /* SINGLE ANIMATION TweenJS style*/
 Sim.TweenjsAnimator = function()
@@ -297,6 +346,7 @@ Sim.TweenjsAnimator.prototype.init = function(param)
 	this.duration = param.duration || 2000;
 	// for signaling completion. Add a completion tween to the end.
 	var complete = new TWEEN.Tween( this ).to({}, param.duration);
+	complete.name = "complete";
 	complete.onComplete( this.onComplete );
 	this.tweens.push(complete);
 
@@ -307,7 +357,7 @@ Sim.TweenjsAnimator.prototype.start = function()
 	if (this.running)
 		return;
 
-	console.log("calling start in TweenjsAnimator");
+	console.log("calling start in TweenjsAnimator # of tweens: " + this.tweens.length);
 	for (var i = 0; i < this.tweens.length; i++)
 	{
 		this.tweens[i].start();
@@ -334,13 +384,7 @@ Sim.TweenjsAnimator.prototype.onComplete = function()
 {
 	console.log("TweenjsAnimator onComplete called.");
 	this.running = false;
-	for (var i = 0; i < this.tweens.length; i++)
-	{
-		this.tweens[i].stop();
-		TWEEN.remove(this.tweens[i]);
-	}
-	
-	//TWEEN.removeAll();
+
 	// must call animation groups oncomplete if part of a group.
 	if ( this.on_complete_callback != null)
 	{

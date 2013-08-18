@@ -333,7 +333,7 @@ SimpleSlide.prototype.initFadeAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
     animatorIn.init({ 
-        interps: ObjectEffects.prototype.fadeIn(this.material),
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
         duration: 500
     });
@@ -342,7 +342,7 @@ SimpleSlide.prototype.initFadeAnimations = function()
     this.animations.push(animatorIn);
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.fadeOut(this.material),
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
         loop: false,
         duration: 500
     });    
