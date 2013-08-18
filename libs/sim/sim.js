@@ -111,7 +111,6 @@ Sim.App.prototype.init = function(param)
     // Put in a camera at a good default location
     camera = new THREE.PerspectiveCamera( 45, container.offsetWidth / container.offsetHeight, 1, 10000 );
     camera.position.set( 0, 0, 3.3333 );
-    console.log(camera.target);
     scene.add(camera);
     
     // Create a root object to contain all other scene objects
