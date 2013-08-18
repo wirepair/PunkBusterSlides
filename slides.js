@@ -1685,6 +1685,127 @@ PreceptionSlide.prototype.update = function()
 /* Ninko Slide                                                               */
 /*****************************************************************************/
 
+NinkoSlide = function()
+{
+    this.name = "NinkoSlide";
+    SimpleSlide.call(this);
+}
+
+NinkoSlide.prototype = new SimpleSlide();
+
+NinkoSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
+
+    
+    // Fox model
+    this.createFoxModels();
+
+    // FLOOR
+    this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
+    this.floor_texture.repeat.set( 10, 10 );
+    // Note the change to Lambert material.
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
+    this.materials.push(floorMaterial);
+    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.y = -0.5;
+    floor.rotation.x = Math.PI / 2;
+    // Note the mesh is flagged to receive shadows
+    floor.receiveShadow = true;
+    this.root.add(floor);
+
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+NinkoSlide.prototype.loadResources = function()
+{
+    this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
+
+
+    // Gear Model
+    var loader = new THREE.ColladaLoader();
+    var that = this;
+    this.fox_left = new THREE.Object3D();
+    this.fox_right = new THREE.Object3D();
+    var that = this;
+    loader.load("resources/models/portalcube.dae", function ( collada ) {
+        that.dae = collada.scene;
+        skin = collada.skins[ 0 ];
+
+        that.dae.updateMatrix();
+        that.fox_geometry = that.dae.children[ 1 ].geometry;
+        that.fox_material = that.dae.children[ 1 ].material;      
+    });
+}
+
+NinkoSlide.prototype.createFoxModels = function()
+{
+    this.fox_left = new THREE.Mesh(this.fox_geometry,this.fox_material);
+    this.fox_right = new THREE.Mesh(this.fox_geometry, this.fox_material);
+    //this.fox_left = copyModel(this.fox_geometry, new THREE.MeshFaceMaterial(this.fox_material));
+    //this.fox_right = copyModel(this.fox_geometry, new THREE.MeshFaceMaterial(this.fox_material));
+    this.materials.push(this.fox_material);
+
+    this.fox_right.scale.x = this.fox_left.scale.x = 25; 
+    this.fox_right.scale.y = this.fox_left.scale.y = 25;
+    this.fox_right.scale.z = this.fox_left.scale.z = 25;
+    this.fox_right.rotation.z = this.fox_left.rotation.z = 0;
+    this.fox_right.rotation.y = this.fox_left.rotation.y = 0;
+    this.fox_right.rotation.x = this.fox_left.rotation.x = 0;
+    
+    
+    this.fox_left.rotation.y = 0.0;
+    this.fox_left.rotation.x = -1.5;
+
+    this.fox_right.rotation.y = 1.0;
+
+    this.fox_left.position.set(0, 65, 0);                
+    this.fox_right.position.set(225, 65, 0);  
+    this.createLighting();
+    
+    this.root.add(this.fox_left);
+    //this.root.add(this.fox_right);
+}
+
+
+NinkoSlide.prototype.createLighting = function()
+{
+    var spot_light = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light.position.set(-250,350,-100);
+    this.root.add(spot_light);
+
+    var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light2.position.set(250,350,-100);
+    this.root.add(spot_light2);
+
+
+    // point it to the ground.
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,0,5);
+    spot_light.target = lightTarget;
+    spot_light2.target = lightTarget;
+
+    // left and right lights
+    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light3.position.set(250,0,-100);
+    this.root.add(spot_light3);
+    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light4.position.set(-250,0,100);
+    this.root.add(spot_light4);
+
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,150,5);
+    spot_light3.target = lightTarget;
+    spot_light4.target = lightTarget;
+}
+
 
 /*****************************************************************************/
 /* UDP Decrypting Proxy Slide                                                */
@@ -1701,12 +1822,6 @@ UDPDPSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
 
-    this.root = new THREE.Object3D();
-    var geometry = new THREE.PlaneGeometry(3.337, 3);
-
-    this.material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.texture, transparent: true } );
-    var mesh = new THREE.Mesh( geometry, this.material ); 
-    this.root.add(mesh);
     // Tell the framework about our object
     this.setObject3D(this.root);
     this.initFadeAnimations();
@@ -1714,13 +1829,14 @@ UDPDPSlide.prototype.init = function(App)
 
 UDPDPSlide.prototype.loadResources = function()
 {
-    this.texture = THREE.ImageUtils.loadTexture("resources/isaac.mohawk.png");
+
 }
 
 
 /*****************************************************************************/
 /* Fake Client Video Slide                                                   */
 /*****************************************************************************/
+
 
 /*****************************************************************************/
 /* pbcl details Slide                                                        */
@@ -1747,7 +1863,7 @@ UDPDPSlide.prototype.loadResources = function()
 /*****************************************************************************/
 
 
-//slides.push(new IntroSlide());
+slides.push(new IntroSlide());
 //slides.push(new MyBioSlide());
 //slides.push(new PBGamesSlide());
 //slides.push(new PunkBusterServicesSlide());
@@ -1758,4 +1874,5 @@ UDPDPSlide.prototype.loadResources = function()
 //slides.push(new AntiRESlide());
 //slides.push(new DecryptionSlide());
 //slides.push(new PbclHookingSlide());
-slides.push(new PreceptionSlide());
+//slides.push(new PreceptionSlide());
+//slides.push(new NinkoSlide());
