@@ -576,6 +576,8 @@ PnkBstrASlide.prototype.init = function(App)
     this.camera_pos.z = 450;
 
     this.floor = this.createWireframeFloor(0xff80ff);
+
+    this.floor.material.opacity = 0;
     this.floor.position.set(0,20,-400); // move floor a bit back.
     this.root.add(this.floor);
     
@@ -700,7 +702,7 @@ FnkBstrASlide.prototype.init = function(App)
     this.camera_pos.y = 150;
     this.camera_pos.z = 500;
 
-    parameters = { color: 0xffffff, envMap: this.textureCube, shading: THREE.FlatShading };
+    parameters = { color: 0xffffff, envMap: this.textureCube, shading: THREE.FlatShading, transparent: true, opacity: 0 };
     cubeMaterial = new THREE.MeshBasicMaterial( parameters );
     this.materials.push(cubeMaterial)
 
@@ -711,7 +713,7 @@ FnkBstrASlide.prototype.init = function(App)
     
     //FnkBstrMan
     var funk_geometry = new THREE.PlaneGeometry(75, 200);
-    var funk_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fnkbstrman, transparent: true } );
+    var funk_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fnkbstrman, transparent: true, opacity: 0 } );
     this.materials.push(funk_material);
     this.funk_mesh = new THREE.Mesh( funk_geometry, funk_material ); 
     this.funk_mesh.position.y = 100;
@@ -726,7 +728,7 @@ FnkBstrASlide.prototype.init = function(App)
     this.floorTexture.wrapS = this.floorTexture.wrapT = THREE.RepeatWrapping; 
     this.floorTexture.repeat.set( 10, 10 );
     // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floorTexture, side: THREE.DoubleSide, transparent: true, opacity: 1 } );
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floorTexture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
     this.materials.push(floorMaterial);
     var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
     var floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -778,15 +780,6 @@ FnkBstrASlide.prototype.createLighting = function()
 }
 FnkBstrASlide.prototype.createFakeLights = function()
 {
-    this.particles = [];
-    this.color = [];
-    this.h = 0;
-    this.geometry = new THREE.Geometry();
-    this.particle_materials = [];
-
-    this.group = new THREE.Object3D();
-
-
     var geo = new THREE.SphereGeometry( 1300, 40, 20 ); // Extra geometry to be broken down for MeshFaceMaterial
     var parameters = { color: 0x000000 };
     var cubeMaterial = new THREE.ParticleBasicMaterial( { size: 10, color: 0xffffff } );
@@ -804,7 +797,7 @@ FnkBstrASlide.prototype.initAnimations = function()
 {
     var animatorIn = new Sim.KeyFrameAnimator;
     animatorIn.init({ 
-        interps: ObjectEffects.prototype.moveFloorIn(this.root),
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
         loop: false,
         duration: 500
     });
@@ -873,6 +866,7 @@ PnkBstrBSlide.prototype.init = function(App)
     this.camera_pos.z = 450;
 
     this.floor = this.createWireframeFloor(0x81BEF7);
+    this.floor.material.opacity = 0;
     this.floor.position.set(0,20,-400); // move floor a bit back.
     this.root.add(this.floor);
     
@@ -901,7 +895,7 @@ PnkBstrBSlide.prototype.init = function(App)
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFloorAnimations();
+    this.initFadeAnimations();
 }
 
 PnkBstrBSlide.prototype.loadResources = function()
@@ -916,7 +910,7 @@ PnkBstrBSlide.prototype.createHeading = function(text, position)
                         position.position.y,
                         position.position.z);
     console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
-    object.material.opacity = 1;
+    object.material.opacity = 0;
     this.materials.push(object.material);
     return object;
 }
@@ -928,7 +922,7 @@ PnkBstrBSlide.prototype.createTextObject = function(text, position, x, y, z)
                         position.position.y + y,
                         position.position.z + z);
     console.log("putting text object " + text + " at " + object.position.x + " " + object.position.y + " " + object.position.z );
-    object.material.opacity = 1;
+    object.material.opacity = 0;
     this.materials.push(object.material);
 
     return object;
@@ -1836,43 +1830,139 @@ UDPDPSlide.prototype.loadResources = function()
 /*****************************************************************************/
 /* Fake Client Video Slide                                                   */
 /*****************************************************************************/
+FakeClientSlide = function()
+{
+    this.name = "FakeClientSlide";
+    SimpleSlide.call(this);
+}
 
+FakeClientSlide.prototype = new SimpleSlide();
+
+FakeClientSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+FakeClientSlide.prototype.loadResources = function()
+{
+
+}
 
 /*****************************************************************************/
 /* pbcl details Slide                                                        */
 /*****************************************************************************/
+PbclDetailsSlide = function()
+{
+    this.name = "PbclDetailsSlide";
+    SimpleSlide.call(this);
+}
+
+PbclDetailsSlide.prototype = new SimpleSlide();
+
+PbclDetailsSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+PbclDetailsSlide.prototype.loadResources = function()
+{
+
+}
 
 
 /*****************************************************************************/
 /* Wiki Slide                                                                */
 /*****************************************************************************/
+WikiSlide = function()
+{
+    this.name = "WikiSlide";
+    SimpleSlide.call(this);
+}
 
+WikiSlide.prototype = new SimpleSlide();
+
+WikiSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+WikiSlide.prototype.loadResources = function()
+{
+
+}
 
 /*****************************************************************************/
 /* TODO Slide                                                                */
 /*****************************************************************************/
+TODOSlide = function()
+{
+    this.name = "TODOSlide";
+    SimpleSlide.call(this);
+}
 
+TODOSlide.prototype = new SimpleSlide();
 
-/*****************************************************************************/
-/* Final Thoughts Slide                                                      */
-/*****************************************************************************/
+TODOSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
 
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+TODOSlide.prototype.loadResources = function()
+{
+
+}
 
 /*****************************************************************************/
 /* Thanks/Credits Slide                                                      */
 /*****************************************************************************/
+ThanksSlide = function()
+{
+    this.name = "ThanksSlide";
+    SimpleSlide.call(this);
+}
 
+ThanksSlide.prototype = new SimpleSlide();
+
+ThanksSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+ThanksSlide.prototype.loadResources = function()
+{
+
+}
 
 slides.push(new IntroSlide());
-//slides.push(new MyBioSlide());
-//slides.push(new PBGamesSlide());
-//slides.push(new PunkBusterServicesSlide());
-//slides.push(new PnkBstrASlide());
-//slides.push(new FnkBstrASlide());
-//slides.push(new PnkBstrBSlide());
-//slides.push(new DeobfuscateSlide());
-//slides.push(new AntiRESlide());
-//slides.push(new DecryptionSlide());
-//slides.push(new PbclHookingSlide());
-//slides.push(new PreceptionSlide());
+slides.push(new MyBioSlide());
+slides.push(new PBGamesSlide());
+slides.push(new PunkBusterServicesSlide());
+slides.push(new PnkBstrASlide());
+slides.push(new FnkBstrASlide());
+slides.push(new PnkBstrBSlide());
+slides.push(new DeobfuscateSlide());
+slides.push(new AntiRESlide());
+slides.push(new DecryptionSlide());
+slides.push(new PbclHookingSlide());
+slides.push(new PreceptionSlide());
 //slides.push(new NinkoSlide());

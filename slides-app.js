@@ -230,7 +230,8 @@ SimpleSlide.prototype.done = function()
     this.root.visible = false;
     this.app.objects = [];
     this.app.reset();
-
+    // need to reset the camera in the event a slide modified it's lookAt (see PrespectiveSlide)
+    this.app.camera = new THREE.PerspectiveCamera( 45, container.offsetWidth / container.offsetHeight, 1, 10000 );
     // delete old references.
     this.root = null;
     this.materials = null;
