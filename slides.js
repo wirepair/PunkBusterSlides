@@ -1707,6 +1707,7 @@ NinkoSlide.prototype.init = function(App)
     {
         var fox_mesh = new THREE.Mesh( fox_geometry, this.fox_material ); 
         fox_mesh.position.y = 100;
+        fox_mesh.position.z -= i;
         this.foxes.push(fox_mesh);
         this.root.add(fox_mesh);
     }
@@ -1733,7 +1734,9 @@ NinkoSlide.prototype.init = function(App)
 }
 NinkoSlide.prototype.loadResources = function()
 {
+
     this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
+    
     this.fox_texture = new THREE.ImageUtils.loadTexture("resources/fox.png");
 }
 
