@@ -1693,12 +1693,25 @@ NinkoSlide.prototype.init = function(App)
 
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
-    this.camera_pos.z = 450;
+    this.camera_pos.z = 550;
 
     
-    // Fox model
-    this.createFoxModels();
+    var fox_geometry = new THREE.PlaneGeometry(100, 200);
+    
+    this.fox_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fox_texture } );
+    this.fox_mesh = new THREE.Mesh( fox_geometry, this.fox_material ); 
+    this.materials.push(this.fox_material);
+    this.foxes = []
 
+    for (var i = 0; i < 5; i++)
+    {
+        var fox_mesh = new THREE.Mesh( fox_geometry, this.fox_material ); 
+        fox_mesh.position.y = 100;
+        this.foxes.push(fox_mesh);
+        this.root.add(fox_mesh);
+    }
+
+    this.createLighting();
     // FLOOR
     this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
     this.floor_texture.repeat.set( 10, 10 );
@@ -1710,62 +1723,18 @@ NinkoSlide.prototype.init = function(App)
     floor.position.y = -0.5;
     floor.rotation.x = Math.PI / 2;
     // Note the mesh is flagged to receive shadows
-    floor.receiveShadow = true;
+    //floor.receiveShadow = true;
     this.root.add(floor);
 
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFadeAnimations();
+    this.initAnimations();
 }
 NinkoSlide.prototype.loadResources = function()
 {
     this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
-
-
-    // Gear Model
-    var loader = new THREE.ColladaLoader();
-    var that = this;
-    this.fox_left = new THREE.Object3D();
-    this.fox_right = new THREE.Object3D();
-    var that = this;
-    loader.load("resources/models/portalcube.dae", function ( collada ) {
-        that.dae = collada.scene;
-        skin = collada.skins[ 0 ];
-
-        that.dae.updateMatrix();
-        that.fox_geometry = that.dae.children[ 1 ].geometry;
-        that.fox_material = that.dae.children[ 1 ].material;      
-    });
-}
-
-NinkoSlide.prototype.createFoxModels = function()
-{
-    this.fox_left = new THREE.Mesh(this.fox_geometry,this.fox_material);
-    this.fox_right = new THREE.Mesh(this.fox_geometry, this.fox_material);
-    //this.fox_left = copyModel(this.fox_geometry, new THREE.MeshFaceMaterial(this.fox_material));
-    //this.fox_right = copyModel(this.fox_geometry, new THREE.MeshFaceMaterial(this.fox_material));
-    this.materials.push(this.fox_material);
-
-    this.fox_right.scale.x = this.fox_left.scale.x = 25; 
-    this.fox_right.scale.y = this.fox_left.scale.y = 25;
-    this.fox_right.scale.z = this.fox_left.scale.z = 25;
-    this.fox_right.rotation.z = this.fox_left.rotation.z = 0;
-    this.fox_right.rotation.y = this.fox_left.rotation.y = 0;
-    this.fox_right.rotation.x = this.fox_left.rotation.x = 0;
-    
-    
-    this.fox_left.rotation.y = 0.0;
-    this.fox_left.rotation.x = -1.5;
-
-    this.fox_right.rotation.y = 1.0;
-
-    this.fox_left.position.set(0, 65, 0);                
-    this.fox_right.position.set(225, 65, 0);  
-    this.createLighting();
-    
-    this.root.add(this.fox_left);
-    //this.root.add(this.fox_right);
+    this.fox_texture = new THREE.ImageUtils.loadTexture("resources/fox.png");
 }
 
 
@@ -1798,6 +1767,68 @@ NinkoSlide.prototype.createLighting = function()
     lightTarget.position.set(0,150,5);
     spot_light3.target = lightTarget;
     spot_light4.target = lightTarget;
+}
+
+NinkoSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    
+    var multiply = this.multiplyAnimations();
+    multiply.init();
+    this.animations.push(multiply);
+    this.addChild(multiply);
+    
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+NinkoSlide.prototype.multiplyAnimations = function()
+{
+    var multiply = new Sim.AnimationGroup;
+    multiply.name = "multiplyAnimation";
+    var z = 0;
+    // some day i should learn math and, like, how to code properly.
+    for (var i = 0; i < this.foxes.length; i++)
+    {   
+        if (i < 3)
+            z = z + -35;
+        else
+            z = z + 35;
+
+        var anim = new Sim.KeyFrameAnimator;
+        var keys = [0, 1];
+        var tx = -200 + (i * 100);
+        var tz = -35 + z;
+        var values = [
+            {x: this.foxes[i].position.x, y: this.foxes[i].position.y, z: this.foxes[i].position.z},
+            {x: tx, y: this.foxes[i].position.y, z: tz}
+        ];
+        anim.init({
+            interps: [{keys: keys, values: values, target: this.foxes[i].position}],
+            loop: false,
+            duration: 1500
+        });
+        multiply.add(anim);
+    }
+    return multiply;
 }
 
 
@@ -1953,16 +1984,16 @@ ThanksSlide.prototype.loadResources = function()
 
 }
 
-slides.push(new IntroSlide());
-slides.push(new MyBioSlide());
-slides.push(new PBGamesSlide());
-slides.push(new PunkBusterServicesSlide());
-slides.push(new PnkBstrASlide());
-slides.push(new FnkBstrASlide());
-slides.push(new PnkBstrBSlide());
-slides.push(new DeobfuscateSlide());
-slides.push(new AntiRESlide());
-slides.push(new DecryptionSlide());
-slides.push(new PbclHookingSlide());
-slides.push(new PreceptionSlide());
-//slides.push(new NinkoSlide());
+//slides.push(new IntroSlide());
+//slides.push(new MyBioSlide());
+//slides.push(new PBGamesSlide());
+//slides.push(new PunkBusterServicesSlide());
+//slides.push(new PnkBstrASlide());
+//slides.push(new FnkBstrASlide());
+//slides.push(new PnkBstrBSlide());
+//slides.push(new DeobfuscateSlide());
+//slides.push(new AntiRESlide());
+//slides.push(new DecryptionSlide());
+//slides.push(new PbclHookingSlide());
+//slides.push(new PreceptionSlide());
+slides.push(new NinkoSlide());
