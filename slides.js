@@ -1445,6 +1445,99 @@ PbclHookingSlide.prototype.fadeOut = function(mesh)
 }
 
 /*****************************************************************************/
+/* Obfuscated Code Slide                                                     */
+/*****************************************************************************/
+ObfuscatedCodeSlide = function()
+{
+    this.name = "ObfuscatedCodeSlide";
+    SimpleSlide.call(this);
+}
+
+ObfuscatedCodeSlide.prototype = new SimpleSlide();
+
+ObfuscatedCodeSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 450;
+
+    
+    var geometry = new THREE.PlaneGeometry(400, 300);
+    
+    this.obfusc_cmd_material = new THREE.MeshBasicMaterial( { map: this.obfusc_cmd_texture, transparent: true, opacity: 0 } );
+    this.obfusc_cmd_mesh = new THREE.Mesh( geometry, this.obfusc_cmd_material ); 
+    this.materials.push(this.obfusc_cmd_material);
+    this.obfusc_cmd_mesh.position.set(0, 150, -5);
+    this.root.add(this.obfusc_cmd_mesh);
+
+    var geometry = new THREE.PlaneGeometry(300, 300);
+    this.obfusc_op_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.obfusc_op_texture, transparent: true, opacity: 0 } );
+    this.obfusc_op_mesh = new THREE.Mesh( geometry, this.obfusc_op_material ); 
+    this.obfusc_op_mesh.position.set(0, 2000, -5);
+    this.materials.push(this.obfusc_op_material);
+    this.root.add(this.obfusc_op_mesh);
+
+
+    this.createFloorLighting();
+    this.floor = this.createTexturedFloor(this.floor_texture);
+
+    this.root.add(this.floor);
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initAnimations();
+}
+
+ObfuscatedCodeSlide.prototype.loadResources = function()
+{
+    this.obfusc_cmd_texture = new THREE.ImageUtils.loadTexture("resources/obfusc_cmd.png");
+    this.obfusc_op_texture = new THREE.ImageUtils.loadTexture("resources/obfusc_op.png");
+    this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
+}
+
+ObfuscatedCodeSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+
+
+    var movein_one = new Sim.AnimationGroup;
+    movein_one.name = "ObfuscMove";
+    var moveSide = this.moveMeshSide(this.obfusc_cmd_mesh, -150, true);
+    movein_one.add(moveSide);
+
+    var moveDown = this.moveMeshDown(this.obfusc_op_mesh);
+    movein_one.add(moveDown);    
+
+    movein_one.init();
+    this.animations.push(movein_one);
+    this.addChild(movein_one);
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+
+
+
+/*****************************************************************************/
 /* Preception Slide                                                          */
 /*****************************************************************************/
 
@@ -1497,7 +1590,7 @@ PreceptionSlide.prototype.init = function(App)
     geometry1.faces[ 1 ].materialIndex = 1;
         
     var goal_mesh =  new THREE.Mesh( geometry1, new THREE.MeshFaceMaterial(this.plane_materials) );
-    goal_mesh.position.set(32, 592, -64);
+    goal_mesh.position.set(32, 620, -64);
     this.materials.push(this.plane_materials[0]);
     this.materials.push(this.plane_materials[1]);
 
@@ -1530,8 +1623,8 @@ PreceptionSlide.prototype.initMineCubes = function()
 {
     var original = new THREE.Object3D();
     var marker = new THREE.Object3D();
-    marker.position.set(-664, 0, -128);
-    original.position.set(-664, 0, -128);
+    marker.position.set(-664, 40, -128);
+    original.position.set(-664, 40, -128);
     this.createCubes(original, marker);
 }
 
@@ -1583,7 +1676,7 @@ PreceptionSlide.prototype.loadResources = function()
     this.grass_texture = THREE.ImageUtils.loadTexture("resources/minecraft/grass.png")
     this.dirt_texture = THREE.ImageUtils.loadTexture("resources/minecraft/dirt.png");
     this.grass_dirt_texture = THREE.ImageUtils.loadTexture("resources/minecraft/grass_dirt.png");
-    this.goal_texture = THREE.ImageUtils.loadTexture("resources/goal.png");
+    this.goal_texture = THREE.ImageUtils.loadTexture("resources/goal_blocks.png");
 
 }
 
@@ -1647,27 +1740,35 @@ PreceptionSlide.prototype.initAnimations = function()
 }
 PreceptionSlide.prototype.look = function(x, y, z)
 {
+    var duration = 250;
     var tweenjs = new Sim.TweenjsAnimator;
     tweenjs.name = "look " + x + " " + y + " " + z;
     var tween = new TWEEN.Tween( this.point_marker.position )
-            .to( { x: x, y: y, z: z }, 1500 )
+            .to( { x: x, y: y, z: z }, duration )
             .easing( TWEEN.Easing.Exponential.InOut );
     tween.name = "look " + x + " " + y + " " + z;
-    tweenjs.init({tweens: [tween], duration: 1500 }); 
+    tweenjs.init({tweens: [tween], duration: duration }); 
     return tweenjs;
 }
 
 PreceptionSlide.prototype.move = function(x, y, z)
 {
+    var duration = 250;
     var tweenjs = new Sim.TweenjsAnimator;
     tweenjs.name = "look " + x + " " + y + " " + z;
     var tween = new TWEEN.Tween( this.app.camera.position )
-            .to( { x: x, y: y, z: z }, 1500 );
+            .to( { x: x, y: y, z: z }, duration );
     tween.name = "look " + x + " " + y + " " + z;
-    tweenjs.init({tweens: [tween], duration: 1500 }); 
+    tweenjs.init({tweens: [tween], duration: duration }); 
     return tweenjs;
 }
-
+PreceptionSlide.prototype.done = function()
+{
+    // NFI why, but the slide after this has it's camera bonkered, so set the default position.
+    this.point_marker.position = new THREE.Vector3(0,150,0);
+    this.update();
+    SimpleSlide.prototype.done.call(this);
+}
 // need to override update so we can force the camera to look at specific positions.
 PreceptionSlide.prototype.update = function()
 {
@@ -1694,7 +1795,7 @@ NinkoSlide.prototype.init = function(App)
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
     this.camera_pos.z = 550;
-
+    
     
     var fox_geometry = new THREE.PlaneGeometry(100, 200);
     
@@ -1711,22 +1812,13 @@ NinkoSlide.prototype.init = function(App)
         this.foxes.push(fox_mesh);
         this.root.add(fox_mesh);
     }
+    
+    this.ninko_mesh = this.createNinkoText();
+    this.root.add(this.ninko_mesh);
 
-    this.createLighting();
-    // FLOOR
-    this.floor_texture.wrapS = this.floor_texture.wrapT = THREE.RepeatWrapping; 
-    this.floor_texture.repeat.set( 10, 10 );
-    // Note the change to Lambert material.
-    var floorMaterial = new THREE.MeshLambertMaterial( { map: this.floor_texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
-    this.materials.push(floorMaterial);
-    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
-    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.position.y = -0.5;
-    floor.rotation.x = Math.PI / 2;
-    // Note the mesh is flagged to receive shadows
-    //floor.receiveShadow = true;
-    this.root.add(floor);
-
+    this.createFloorLighting();
+    this.floor = this.createTexturedFloor(this.floor_texture);
+    this.root.add(this.floor);
 
     // Tell the framework about our object
     this.setObject3D(this.root);
@@ -1734,42 +1826,26 @@ NinkoSlide.prototype.init = function(App)
 }
 NinkoSlide.prototype.loadResources = function()
 {
-
     this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
     
     this.fox_texture = new THREE.ImageUtils.loadTexture("resources/fox.png");
+    this.ninko_texture = new THREE.ImageUtils.loadTexture("resources/ninko_text.png");
 }
 
-
-NinkoSlide.prototype.createLighting = function()
+NinkoSlide.prototype.createNinkoText = function()
 {
-    var spot_light = ObjectEffects.prototype.createSpotlight(0xffffff);
-    spot_light.position.set(-250,350,-100);
-    this.root.add(spot_light);
+    var geometry = new THREE.PlaneGeometry(350, 500);
+    // want to know how i came up with these values? Trial and fucking error.
+    this.ninko_texture.offset.x = 0;
+    this.ninko_texture.repeat.x = 1;
 
-    var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
-    spot_light2.position.set(250,350,-100);
-    this.root.add(spot_light2);
+    this.ninko_texture.offset.y = 0.80;
+    this.ninko_texture.repeat.y = 0.2;
 
-
-    // point it to the ground.
-    var lightTarget = new THREE.Object3D();
-    lightTarget.position.set(0,0,5);
-    spot_light.target = lightTarget;
-    spot_light2.target = lightTarget;
-
-    // left and right lights
-    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff);
-    spot_light3.position.set(250,0,-100);
-    this.root.add(spot_light3);
-    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff);
-    spot_light4.position.set(-250,0,100);
-    this.root.add(spot_light4);
-
-    var lightTarget = new THREE.Object3D();
-    lightTarget.position.set(0,150,5);
-    spot_light3.target = lightTarget;
-    spot_light4.target = lightTarget;
+    this.ninko_material = new THREE.MeshBasicMaterial( { map: this.ninko_texture, transparent: true, opacity: 1});
+    var mesh = new THREE.Mesh( geometry, this.ninko_material ); 
+    mesh.position.y = -2000;
+    return mesh;
 }
 
 NinkoSlide.prototype.initAnimations = function()
@@ -1784,11 +1860,37 @@ NinkoSlide.prototype.initAnimations = function()
     animatorIn.name = "animatorIn";
     this.animations.push(animatorIn);
 
-    
+
     var multiply = this.multiplyAnimations();
     multiply.init();
     this.animations.push(multiply);
     this.addChild(multiply);
+    
+    var slideUp = new Sim.KeyFrameAnimator;
+    slideUp.name = "fadeInNinko";
+    slideUp.init({
+        interps: ObjectEffects.prototype.slideUp(this.ninko_mesh),
+        loop: false,
+        duration: 2000
+    });
+    this.animations.push(slideUp);
+    this.addChild(slideUp);   
+
+    var scroll_keys = [
+        [0.80, 0.76, 500],
+        [0.76, 0.625, 1000],
+        [0.625, 0.485, 1000],
+        [0.485, 0.34, 2000]
+    ];
+    for (var i = 0; i < scroll_keys.length; i++)
+    {
+        var scroll = this.scrollAnimation(scroll_keys[i][0], scroll_keys[i][1], scroll_keys[i][2]);
+        this.animations.push(scroll);
+        this.addChild(scroll);        
+    }
+
+
+    
     
 
     var animatorOut = new Sim.KeyFrameAnimator;
@@ -1802,7 +1904,22 @@ NinkoSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
+NinkoSlide.prototype.scrollAnimation = function(from, to, duration)
+{
+    var anim = new Sim.KeyFrameAnimator;
+    var keys = [0, 1];
+    var values = [
+        {x: 0, y: from, z: 0},
+        {x: 0, y: to, z: 0}
+    ]; // end -0.07 start = 0.80
+    anim.init({
+        interps: [{keys: keys, values: values, target: this.ninko_texture.offset}],
+        loop: false,
+        duration: duration
+    });
+    return anim;
 
+}
 NinkoSlide.prototype.multiplyAnimations = function()
 {
     var multiply = new Sim.AnimationGroup;
@@ -1998,5 +2115,6 @@ ThanksSlide.prototype.loadResources = function()
 //slides.push(new AntiRESlide());
 //slides.push(new DecryptionSlide());
 //slides.push(new PbclHookingSlide());
+//slides.push(new ObfuscatedCodeSlide());
 //slides.push(new PreceptionSlide());
 slides.push(new NinkoSlide());

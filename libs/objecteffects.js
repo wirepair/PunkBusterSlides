@@ -107,6 +107,21 @@ ObjectEffects.prototype.moveFloorOut = function(object3D)
             ];
 }
 
+ObjectEffects.prototype.slideUp = function(object3D)
+{
+    var keys = [0, .75, 1];
+    var values = [ 
+                   { x: 0, y: -500, z: 5},
+                   { x: 0, y: 0, z: 5},
+                   { x : 0, y: 100, z : 0}
+    ];
+
+    return [ 
+            { keys:keys, values:values, target:object3D.position }
+            ];
+}
+
+
 /*
  * fadeIn - Set's an array of materials opacity level from 0 (transparent) to 1.
  * 

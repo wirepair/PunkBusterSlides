@@ -206,11 +206,13 @@ SimpleSlide.prototype.loadResources = function()
  */ 
 SimpleSlide.prototype.go = function()
 {
+
     this.setCamera();
     if (this.object3D != null)
     {
         this.object3D.visible = true;
     }
+
     console.log("go called.");
     this.animations.reset();
 
@@ -230,8 +232,7 @@ SimpleSlide.prototype.done = function()
     this.root.visible = false;
     this.app.objects = [];
     this.app.reset();
-    // need to reset the camera in the event a slide modified it's lookAt (see PrespectiveSlide)
-    this.app.camera = new THREE.PerspectiveCamera( 45, container.offsetWidth / container.offsetHeight, 1, 10000 );
+  
     // delete old references.
     this.root = null;
     this.materials = null;
@@ -318,6 +319,54 @@ SimpleSlide.prototype.createDottedFloor = function(color, coords, texture)
     return floor;
 }
 
+SimpleSlide.prototype.createTexturedFloor = function(texture, receiveShadow)
+{
+    var receive = receiveShadow || false;
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+    texture.repeat.set( 10, 10 );
+    // Note the change to Lambert material.
+    var floorMaterial = new THREE.MeshLambertMaterial( { map: texture, side: THREE.DoubleSide, transparent: true, opacity: 0 } );
+    this.materials.push(floorMaterial);
+    var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.y = -0.5;
+    floor.rotation.x = Math.PI / 2;
+    // Note the mesh is flagged to receive shadows
+    floor.receiveShadow = true;
+    return floor;
+}
+
+SimpleSlide.prototype.createFloorLighting = function()
+{
+    var spot_light = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light.position.set(-250,350,-100);
+    this.root.add(spot_light);
+
+    var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light2.position.set(250,350,-100);
+    this.root.add(spot_light2);
+
+
+    // point it to the ground.
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,0,5);
+    spot_light.target = lightTarget;
+    spot_light2.target = lightTarget;
+
+    // left and right lights
+    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light3.position.set(250,0,-100);
+    this.root.add(spot_light3);
+    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light4.position.set(-250,0,100);
+    this.root.add(spot_light4);
+
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,150,5);
+    spot_light3.target = lightTarget;
+    spot_light4.target = lightTarget;
+}
+
 
 /*
  * setCamera - Sets the camera position when a slide is first called. This is important 
@@ -329,6 +378,8 @@ SimpleSlide.prototype.setCamera = function()
 {
     this.app.camera.position.set(this.camera_pos.x, this.camera_pos.y, this.camera_pos.z);
 }
+
+
 
 SimpleSlide.prototype.initFadeAnimations = function()
 {
