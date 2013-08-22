@@ -241,10 +241,127 @@ SimpleSlide.prototype.done = function()
     this.setCamera();
 }
 
+
+
+SimpleSlide.prototype.create3dText = function(the_text, group)
+{
+    var mirror = mirror || false;
+    var material = new THREE.MeshFaceMaterial( [ 
+        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } ), // front
+        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.SmoothShading } ) // side
+    ] );
+    var text = "three.js",
+        height = 20,
+        size = 70,
+        hover = 30,
+
+        curveSegments = 4,
+
+        bevelThickness = 2,
+        bevelSize = 1.5,
+        bevelSegments = 3,
+        bevelEnabled = true,
+
+        font = "optimer", // helvetiker, optimer, gentilis, droid sans, droid serif
+        weight = "bold", // normal bold
+        style = "normal"; // normal italic
+
+    textGeo = new THREE.TextGeometry( text, {
+
+        size: size,
+        height: height,
+        curveSegments: curveSegments,
+
+        font: font,
+        weight: weight,
+        style: style,
+
+        bevelThickness: bevelThickness,
+        bevelSize: bevelSize,
+        bevelEnabled: bevelEnabled,
+
+        material: 0,
+        extrudeMaterial: 1
+
+    });
+
+    textGeo.computeBoundingBox();
+    textGeo.computeVertexNormals();
+
+    // "fix" side normals by removing z-component of normals for side faces
+    // (this doesn't work well for beveled geometry as then we lose nice curvature around z-axis)
+
+    if ( ! bevelEnabled ) {
+
+        var triangleAreaHeuristics = 0.1 * ( height * size );
+
+        for ( var i = 0; i < textGeo.faces.length; i ++ ) {
+
+            var face = textGeo.faces[ i ];
+
+            if ( face.materialIndex == 1 ) {
+
+                for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
+
+                    face.vertexNormals[ j ].z = 0;
+                    face.vertexNormals[ j ].normalize();
+
+                }
+
+                var va = textGeo.vertices[ face.a ];
+                var vb = textGeo.vertices[ face.b ];
+                var vc = textGeo.vertices[ face.c ];
+
+                var s = THREE.GeometryUtils.triangleArea( va, vb, vc );
+
+                if ( s > triangleAreaHeuristics ) {
+
+                    for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
+
+                        face.vertexNormals[ j ].copy( face.normal );
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    var centerOffset = -0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
+
+    textMesh1 = new THREE.Mesh( textGeo, material );
+
+    textMesh1.position.x = centerOffset;
+    textMesh1.position.y = hover;
+    textMesh1.position.z = 0;
+
+    textMesh1.rotation.x = 0;
+    textMesh1.rotation.y = Math.PI * 2;
+
+    group.add( textMesh1 );
+
+    if ( mirror ) {
+
+        textMesh2 = new THREE.Mesh( textGeo, material );
+
+        textMesh2.position.x = centerOffset;
+        textMesh2.position.y = -hover;
+        textMesh2.position.z = height;
+
+        textMesh2.rotation.x = Math.PI;
+        textMesh2.rotation.y = Math.PI * 2;
+
+        group.add( textMesh2 );
+    }
+
+}
 /*
  * create2dText - Creates text by creating a 2d canvas and maps it as a Texture.
  */
-SimpleSlide.prototype.create2dText = function(the_text, size, width, height, align)
+SimpleSlide.prototype.create2dText = function(the_text, size, width, height, align, color, font)
 {
 
     var size = size || 50;
@@ -253,11 +370,13 @@ SimpleSlide.prototype.create2dText = function(the_text, size, width, height, ali
     var width = width || 350;
     var height = height || 150;
     var align = align || 'center';
+    var color = color || 'white';
+    var font = font || 'Calibri';
     canvas.width = width;
     canvas.height = height;
-    context.font = size+'pt Calibri';
+    context.font = size+'pt '+ font;
     context.textAlign = align;
-    context.fillStyle = 'white';
+    context.fillStyle = color;
     var x = canvas.width / 2;
     var y = canvas.height / 2;
     console.log("x: " + x + " y: " + y);
@@ -269,7 +388,7 @@ SimpleSlide.prototype.create2dText = function(the_text, size, width, height, ali
     material.transparent = true;
     var mesh = new THREE.Mesh(
         new THREE.PlaneGeometry(canvas.width/2, canvas.height/2), material);
-    
+    this.materials.push(material);
 
     return mesh;
 }

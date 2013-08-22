@@ -1966,17 +1966,104 @@ UDPDPSlide.prototype = new SimpleSlide();
 UDPDPSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 1800;
 
+    this.floor = this.createDottedFloor();
+    this.floor.position.set(0,-200,-200); // move floor a bit back.
+    this.root.add(this.floor);
+   
+    var geometry = new THREE.PlaneGeometry(1600, 1100, 1);
+    this.udpdp_material = new THREE.MeshBasicMaterial({map: this.udpdp_texture, transparent: true, opacity: 0});
+    this.udpdp_mesh = new THREE.Mesh( geometry, this.udpdp_material);
+    this.udpdp_mesh.position.y = 140;
+    this.udpdp_mesh.rotation.y = 0;
+    this.udpdp_mesh.position.z = 260;
+    this.materials.push(this.udpdp_material);
+    this.root.add(this.udpdp_mesh);
+
+    this.image = document.createElement( 'canvas' );
+    this.image.width = 1600;
+    this.image.height = 1200;
+
+    this.imageContext = this.image.getContext( '2d' );
+    this.imageContext.fillStyle = '#000000';
+    this.imageContext.fillRect( 0, 0, 1600, 1200 );
+
+    this.video_texture = new THREE.Texture( this.image );
+    this.video_texture.minFilter = THREE.LinearFilter;
+    this.video_texture.magFilter = THREE.LinearFilter;
+
+    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 1 } );
+    
+    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4 );
+
+    this.video_mesh = new THREE.Mesh( plane, this.video_material );
+    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
+    this.video_mesh.position.y = 140;
+    this.video_mesh.rotation.y = 0;
+    this.video_mesh.position.z = 250;
+    this.root.add(this.video_mesh);
+    
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFadeAnimations();
+    this.initAnimations();
+
 }
 
 UDPDPSlide.prototype.loadResources = function()
 {
-
+    this.video = document.getElementById('fakeclient_video');
+    this.udpdp_texture = THREE.ImageUtils.loadTexture("resources/udpdp_usage.png");
 }
+UDPDPSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
 
+    // GROUP
+    var group = new Sim.AnimationGroup;
+    group.name = "FadeOutUDPStartVideo";
+    var fadeOut = new Sim.KeyFrameAnimator;
+    fadeOut.name = "FadeOutUDPDP";
+    fadeOut.init({
+        interps: ObjectEffects.prototype.fadeOut(this.udpdp_material),
+        duration: 250,
+        loop: false
+    });
+    this.addChild(fadeOut);
+    group.add(fadeOut);
+
+    var videoAnimator = new Sim.VideoAnimator;
+    videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
+    this.addChild(videoAnimator);
+    group.add(videoAnimator);
+
+    this.addChild(group);
+    group.init({isChain: true});
+    this.animations.push(group);
+
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
+    
 
 /*****************************************************************************/
 /* Fake Client Video Slide                                                   */
@@ -1992,15 +2079,93 @@ FakeClientSlide.prototype = new SimpleSlide();
 FakeClientSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 1800;
 
+    this.floor = this.createDottedFloor();
+    this.floor.position.set(0,-200,-200); // move floor a bit back.
+    this.root.add(this.floor);
+   
+    this.image = document.createElement( 'canvas' );
+
+    this.image.width = 1600;
+    this.image.height = 1200;
+
+    this.imageContext = this.image.getContext( '2d' );
+    this.imageContext.fillStyle = '#000000';
+    this.imageContext.fillRect( 0, 0, 1600, 1200 );
+
+    this.video_texture = new THREE.Texture( this.image );
+    this.video_texture.minFilter = THREE.LinearFilter;
+    this.video_texture.magFilter = THREE.LinearFilter;
+
+    this.material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true } );
+    
+    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4 );
+
+    this.video_mesh = new THREE.Mesh( plane, this.material );
+    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
+    this.video_mesh.position.y = 140;
+    this.video_mesh.rotation.y = 0;
+    this.video_mesh.position.z = 250;
+    this.root.add(this.video_mesh);
+    
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFadeAnimations();
+    this.initAnimations();
 }
 
 FakeClientSlide.prototype.loadResources = function()
-{
+{ 
+    this.video = document.getElementById('fakeclient_video');
 
+}
+
+FakeClientSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    var group = new Sim.AnimationGroup;
+    group.name = "FadeOutUDPStartVideo";
+    var fadeOut = new Sim.KeyFrameAnimator;
+    fadeOut.name = "FadeOutUDPDP";
+    fadeOut.init({
+        interps: ObjectEffects.prototype.fadeOut(this.udpdp_material),
+        duration: 250,
+        loop: false
+    });
+    this.addChild(fadeOut);
+    group.add(fadeOut);
+
+    var videoAnimator = new Sim.VideoAnimator;
+    videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
+    this.addChild(videoAnimator);
+    group.add(videoAnimator);
+
+    this.addChild(group);
+    group.init({isChain: true});
+    this.animations.push(group);
+
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
 }
 
 /*****************************************************************************/
@@ -2030,6 +2195,74 @@ PbclDetailsSlide.prototype.loadResources = function()
 
 
 /*****************************************************************************/
+/* TODO Slide                                                                */
+/*****************************************************************************/
+TODOSlide = function()
+{
+    this.name = "TODOSlide";
+    SimpleSlide.call(this);
+}
+
+TODOSlide.prototype = new SimpleSlide();
+
+TODOSlide.prototype.init = function(App)
+{
+    SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 500;
+
+
+    var geometry = new THREE.PlaneGeometry(300, 400);
+    this.clip_material = new THREE.MeshBasicMaterial({map: this.todo_texture, transparent: true, opacity: 0});
+    this.clip_mesh = new THREE.Mesh( geometry, this.clip_material);
+    this.clip_mesh.position.y = 150;
+    this.clip_mesh.position.z = -1;
+    this.materials.push(this.clip_material);
+    this.root.add(this.clip_mesh);
+
+    this.createText();
+
+    // Tell the framework about our object
+    this.setObject3D(this.root);
+    this.initFadeAnimations();
+}
+
+TODOSlide.prototype.loadResources = function()
+{
+    this.todo_texture = THREE.ImageUtils.loadTexture("resources/clipboard.png");
+}
+TODOSlide.prototype.createText = function()
+{
+    this.todo = this.create2dText("TODO", 48, 220, 200, 'center', 'black', 'Verdana');
+    this.todo.position.set(-42, 238, 0);
+    this.root.add(this.todo);
+
+
+    this.deobfuscate = this.create2dText("- Automatically deobfuscate code", 16, 600, 200, 'center', 'black', 'Verdana');
+    this.deobfuscate.position.set(-4, 216, 0);
+    this.root.add(this.deobfuscate);
+
+    this.decrypt = this.create2dText("- Decrypt pbcl<->PB server comms", 16, 800, 200, 'center', 'black', 'Verdana');
+    this.decrypt.position.set( 2, 197, 0);
+    this.root.add(this.decrypt);
+
+    this.grok = this.create2dText("- Grok BFP4F.exe<->pbcl game struct", 16, 800, 200, 'center', 'black', 'Verdana');
+    this.grok.position.set(9, 178, 0);
+    this.root.add(this.grok);
+
+    this.decrypt_file = this.create2dText("- Decrypt wc002304.htm hacks file", 16, 800, 200, 'center', 'black', 'Verdana');
+    this.decrypt_file.position.set(0, 159, 0);
+    this.root.add(this.decrypt_file);
+
+    this.gaurantee = this.create2dText("- No gaurantee I will do any of this :>", 16, 800, 200, 'center', 'red', 'Verdana');
+    this.gaurantee.position.set(9, 140, 0);
+    this.root.add(this.gaurantee);
+
+       
+}
+
+/*****************************************************************************/
 /* Wiki Slide                                                                */
 /*****************************************************************************/
 WikiSlide = function()
@@ -2055,31 +2288,6 @@ WikiSlide.prototype.loadResources = function()
 }
 
 /*****************************************************************************/
-/* TODO Slide                                                                */
-/*****************************************************************************/
-TODOSlide = function()
-{
-    this.name = "TODOSlide";
-    SimpleSlide.call(this);
-}
-
-TODOSlide.prototype = new SimpleSlide();
-
-TODOSlide.prototype.init = function(App)
-{
-    SimpleSlide.prototype.init.call(this, App);
-
-    // Tell the framework about our object
-    this.setObject3D(this.root);
-    this.initFadeAnimations();
-}
-
-TODOSlide.prototype.loadResources = function()
-{
-
-}
-
-/*****************************************************************************/
 /* Thanks/Credits Slide                                                      */
 /*****************************************************************************/
 ThanksSlide = function()
@@ -2093,12 +2301,45 @@ ThanksSlide.prototype = new SimpleSlide();
 ThanksSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 400;
+    this.camera_pos.z = 700;
+
+    this.createLighting();
+
+    material = new THREE.MeshFaceMaterial( [ 
+        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } ), // front
+        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.SmoothShading } ) // side
+    ] );
+    group = new THREE.Object3D();
+    group.position.y = 100;
+    this.root.add(group);
+
+    var plane = new THREE.Mesh( new THREE.PlaneGeometry( 10000, 10000 ), new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 0.5, transparent: true } ) );
+    plane.position.y = 100;
+    plane.rotation.x = - Math.PI / 2;
+    this.root.add(plane);
+
+    this.create3dText("bonk", group);
 
     // Tell the framework about our object
     this.setObject3D(this.root);
     this.initFadeAnimations();
 }
+ThanksSlide.prototype.createLighting = function()
+{
+    var dirLight = new THREE.DirectionalLight( 0xffffff, 0.125 );
+    dirLight.position.set( 0, 0, 1 ).normalize();
+    this.root.add(dirLight);
 
+    var pointLight = new THREE.PointLight( 0xffffff, 1.5 );
+    pointLight.position.set( 0, 100, 90 );
+    this.root.add(pointLight);
+
+    pointLight.color.setHSL( Math.random(), 1, 0.5 );
+    hex = decimalToHex( pointLight.color.getHex() );
+
+}
 ThanksSlide.prototype.loadResources = function()
 {
 
@@ -2117,4 +2358,10 @@ ThanksSlide.prototype.loadResources = function()
 //slides.push(new PbclHookingSlide());
 //slides.push(new ObfuscatedCodeSlide());
 //slides.push(new PreceptionSlide());
-slides.push(new NinkoSlide());
+//slides.push(new NinkoSlide());
+//slides.push(new UDPDPSlide());
+//slides.push(new FakeClientSlide());
+//slides.push(new PbclDetailsSlide());
+//slides.push(new TODOSlide());
+//slides.push(new WikiSlide());
+slides.push(new ThanksSlide());

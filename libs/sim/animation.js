@@ -280,58 +280,6 @@ Sim.VideoAnimator.prototype.update = function()
     }
 }
 
-
-// Used for animating pathing/looking.
-/*
-Sim.ControlAnimator = function()
-{
-	Sim.Animator.call();
-}
-
-Sim.ControlAnimator.prototype = new Sim.Animator;
-
-Sim.ControlAnimator.prototype.init = function(param)
-{
-	param = param || {};
-	this.waypoints = param.waypoints;
-	this.duration = param.duration;
-
-
-}
-
-Sim.ControlAnimator.prototype.start = function()
-{
-	if (this.running)
-		return;
-
-	console.log("calling start in ControlAnimator");
-	this.video.play();
-	this.running = true;
-}
-
-Sim.ControlAnimator.prototype.stop = function()
-{
-	this.running = false;
-	console.log("ControlAnimator.stop");
-	this.video.stop();
-	this.onComplete();
-}
-
-Sim.ControlAnimator.prototype.update = function()
-{
-	if ( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) 
-    {
-
-        this.image_context.drawImage( this.video, 0, 0 );
-
-        if ( this.video_texture ) 
-        {
-            this.video_texture.needsUpdate = true;
-        }
-    }
-}
-*/
-
 /* SINGLE ANIMATION TweenJS style*/
 Sim.TweenjsAnimator = function()
 {
