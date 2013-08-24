@@ -209,6 +209,7 @@ Sim.Animator.prototype.update = function()
 Sim.Animator.prototype.onComplete = function()
 {
 	console.log("Sim.Animator.onComplete called for " + this.name);
+	this.running = false;
 	if ( this.on_complete_callback != null)
 	{
 		this.on_complete_callback.call(this.parent);
@@ -268,6 +269,9 @@ Sim.VideoAnimator.prototype.stop = function()
 
 Sim.VideoAnimator.prototype.update = function()
 {
+	if (!this.running)
+		return;
+
 	if ( this.video.readyState === this.video.HAVE_ENOUGH_DATA ) 
     {
 

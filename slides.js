@@ -1099,7 +1099,6 @@ AntiRESlide.prototype.loadResources = function()
 
     // Gear Model
     var loader = new THREE.ColladaLoader();
-    var that = this;
     this.pin_left = new THREE.Object3D();
     this.pin_right = new THREE.Object3D();
     var that = this;
@@ -1889,10 +1888,6 @@ NinkoSlide.prototype.initAnimations = function()
         this.addChild(scroll);        
     }
 
-
-    
-    
-
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.init({ 
         interps: ObjectEffects.prototype.fadeOut(this.materials),
@@ -2014,7 +2009,7 @@ UDPDPSlide.prototype.init = function(App)
 
 UDPDPSlide.prototype.loadResources = function()
 {
-    this.video = document.getElementById('fakeclient_video');
+    this.video = document.getElementById('udpdp_video');
     this.udpdp_texture = THREE.ImageUtils.loadTexture("resources/udpdp_usage.png");
 }
 UDPDPSlide.prototype.initAnimations = function()
@@ -2079,6 +2074,7 @@ FakeClientSlide.prototype = new SimpleSlide();
 FakeClientSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
     this.camera_pos.z = 1800;
@@ -2086,40 +2082,66 @@ FakeClientSlide.prototype.init = function(App)
     this.floor = this.createDottedFloor();
     this.floor.position.set(0,-200,-200); // move floor a bit back.
     this.root.add(this.floor);
-   
-    this.image = document.createElement( 'canvas' );
 
-    this.image.width = 1600;
-    this.image.height = 1200;
-
-    this.imageContext = this.image.getContext( '2d' );
-    this.imageContext.fillStyle = '#000000';
-    this.imageContext.fillRect( 0, 0, 1600, 1200 );
-
-    this.video_texture = new THREE.Texture( this.image );
-    this.video_texture.minFilter = THREE.LinearFilter;
-    this.video_texture.magFilter = THREE.LinearFilter;
-
-    this.material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true } );
-    
-    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4 );
-
-    this.video_mesh = new THREE.Mesh( plane, this.material );
-    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
-    this.video_mesh.position.y = 140;
-    this.video_mesh.rotation.y = 0;
-    this.video_mesh.position.z = 250;
-    this.root.add(this.video_mesh);
+    this.createVideos();
     
     // Tell the framework about our object
     this.setObject3D(this.root);
     this.initAnimations();
-}
 
+}
+FakeClientSlide.prototype.createVideos = function()
+{
+    this.images = [];
+    this.imageContexts = [];
+    this.video_textures = [];
+    this.video_meshes = [];
+    this.video_materials = [];
+    for (var i = 0; i < this.videos.length; i++)
+    {
+        //this.images.push(document.createElement('canvas'));
+        this.images[i] = document.createElement( 'canvas' );
+        this.images[i].width = 1232;
+        this.images[i].height = 922;
+
+        this.imageContexts[i] = this.images[i].getContext( '2d' );
+        this.imageContexts[i].fillStyle = '#000000';
+        this.imageContexts[i].fillRect( 0, 0, 1232, 922 );
+        this.imageContexts[i].drawImage( this.videos[i], 0, 0 );
+
+        this.video_textures[i] = new THREE.Texture( this.images[i] );
+        this.video_textures[i].minFilter = THREE.LinearFilter;
+        this.video_textures[i].magFilter = THREE.LinearFilter;
+        this.video_textures[i].needsUpdate = true;
+
+        this.video_materials[i] = new THREE.MeshBasicMaterial( { map: this.video_textures[i], overdraw: true, transparent: true, opacity: 0 } );
+        var plane = new THREE.PlaneGeometry( 1232, 922, 4, 4 );
+        this.materials.push(this.video_materials[i]);
+
+        this.video_meshes[i] = new THREE.Mesh( plane, this.video_materials[i] );
+        this.video_meshes[i].scale.x = this.video_meshes[i].scale.y = this.video_meshes[i].scale.z = 1.0;
+        if (i == 0)
+        {
+            this.video_meshes[i].position.y = 140;   
+        }
+        else
+        {
+            this.video_meshes[i].position.y = 2000; // move others off to the top
+        }
+
+        this.video_meshes[i].position.z = 250;            
+        this.root.add(this.video_meshes[i]);
+    }
+}
 FakeClientSlide.prototype.loadResources = function()
 { 
-    this.video = document.getElementById('fakeclient_video');
-
+    this.videos = [];
+    this.videos.push(document.getElementById('start_client_video'));
+    this.videos.push(document.getElementById('gethw_video'));
+    this.videos.push(document.getElementById('pids_video'));
+    this.videos.push(document.getElementById('modules_video'));
+    this.videos.push(document.getElementById('memorypages_video'));
+    this.videos.push(document.getElementById('dump_memory_video'));
 }
 
 FakeClientSlide.prototype.initAnimations = function()
@@ -2134,27 +2156,36 @@ FakeClientSlide.prototype.initAnimations = function()
     animatorIn.name = "animatorIn";
     this.animations.push(animatorIn);
 
-    var group = new Sim.AnimationGroup;
-    group.name = "FadeOutUDPStartVideo";
-    var fadeOut = new Sim.KeyFrameAnimator;
-    fadeOut.name = "FadeOutUDPDP";
-    fadeOut.init({
-        interps: ObjectEffects.prototype.fadeOut(this.udpdp_material),
-        duration: 250,
-        loop: false
-    });
-    this.addChild(fadeOut);
-    group.add(fadeOut);
+    for (var i = 0; i < this.videos.length; i++)
+    {
+        var videoAnimator = new Sim.VideoAnimator;
+        videoAnimator.name = "video: " + i + " video: " + this.videos[i].getAttribute('id');
+        videoAnimator.init({video: this.videos[i], video_texture: this.video_textures[i], image_context: this.imageContexts[i]});
+        if (i == 0)
+        {
+            this.addChild(videoAnimator);
+            this.animations.push(videoAnimator);
+            continue;
+        }
+        
+        var group = new Sim.AnimationGroup;
+        var downOut = this.moveMeshDownOut(this.video_meshes[i-1]);
+        group.add(downOut);
 
-    var videoAnimator = new Sim.VideoAnimator;
-    videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
-    this.addChild(videoAnimator);
-    group.add(videoAnimator);
+        var downIn = this.moveMeshDownIn(this.video_meshes[i]);
+        group.add(downIn);
+        
 
-    this.addChild(group);
-    group.init({isChain: true});
-    this.animations.push(group);
+        
+        group.init({isChain:true});
+        this.addChild(group);
+        this.animations.push(group);
 
+        this.addChild(videoAnimator);
+        this.animations.push(videoAnimator);
+    }
+
+        
 
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.init({ 
@@ -2166,6 +2197,50 @@ FakeClientSlide.prototype.initAnimations = function()
     this.addChild(animatorOut);
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
+}
+
+FakeClientSlide.prototype.moveMeshDownIn = function(mesh)
+{
+    var down = new Sim.KeyFrameAnimator;
+    down.name = "moveDownAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: m.x, y: 2000, z: m.z}, 
+        { x: m.x, y: 1000, z: m.z},
+        { x: m.x, y: 140, z: m.z}
+    ];
+    
+    var interps = [{keys: keys, values: position_values, target: mesh.position}];
+    down.init({
+        interps: interps,
+        loop: false,
+        duration: 250
+    });
+    return down;
+}
+
+FakeClientSlide.prototype.moveMeshDownOut = function(mesh)
+{
+    var down = new Sim.KeyFrameAnimator;
+    down.name = "moveDownAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: m.x, y: 140, z: m.z}, 
+        { x: m.x, y: -1000, z: m.z},
+        { x: m.x, y: -1850, z: m.z}
+    ];
+    
+    var interps = [{keys: keys, values: position_values, target: mesh.position}];
+    down.init({
+        interps: interps,
+        loop: false,
+        duration: 250
+    });
+    return down;
 }
 
 /*****************************************************************************/
@@ -2263,31 +2338,6 @@ TODOSlide.prototype.createText = function()
 }
 
 /*****************************************************************************/
-/* Wiki Slide                                                                */
-/*****************************************************************************/
-WikiSlide = function()
-{
-    this.name = "WikiSlide";
-    SimpleSlide.call(this);
-}
-
-WikiSlide.prototype = new SimpleSlide();
-
-WikiSlide.prototype.init = function(App)
-{
-    SimpleSlide.prototype.init.call(this, App);
-
-    // Tell the framework about our object
-    this.setObject3D(this.root);
-    this.initFadeAnimations();
-}
-
-WikiSlide.prototype.loadResources = function()
-{
-
-}
-
-/*****************************************************************************/
 /* Thanks/Credits Slide                                                      */
 /*****************************************************************************/
 ThanksSlide = function()
@@ -2302,66 +2352,141 @@ ThanksSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
     this.camera_pos.x = 0;
-    this.camera_pos.y = 400;
-    this.camera_pos.z = 700;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 500;
 
-    this.createLighting();
+    // Twitter
+    var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.twitter_texture, transparent: true, opacity: 0}); //
+    this.materials.push(material);
+    var geometry = new THREE.CubeGeometry(50,50,50);
+    this.twitter_mesh = new THREE.Mesh(geometry, material);
+    this.twitter_mesh.position.set(-250,300,5);
+    //this.twitter_mesh.rotation.y =  Math.PI*1.68;
+    this.twitter_mesh.rotation.x = -0.01;
+    this.root.add(this.twitter_mesh);
 
-    material = new THREE.MeshFaceMaterial( [ 
-        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } ), // front
-        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.SmoothShading } ) // side
-    ] );
-    group = new THREE.Object3D();
-    group.position.y = 100;
-    this.root.add(group);
 
-    var plane = new THREE.Mesh( new THREE.PlaneGeometry( 10000, 10000 ), new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 0.5, transparent: true } ) );
-    plane.position.y = 100;
-    plane.rotation.x = - Math.PI / 2;
-    this.root.add(plane);
+    this.twitter_text = this.create2dText("@_wirepair", 32, 300, 200, 'center', 'white', 'Verdana');
+    this.twitter_text.position.set(-160, 300, -45);
+    this.root.add(this.twitter_text);
 
-    this.create3dText("bonk", group);
+    // GITHUB
+    var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.github_texture, transparent: true, opacity: 0}); //
+    this.materials.push(material);
+    var geometry = new THREE.SphereGeometry(30,30,30);
+    this.github_mesh = new THREE.Mesh(geometry, material);
+    this.github_mesh.position.set(-250,220,5);
+    //this.twitter_mesh.rotation.y =  Math.PI*1.68;
+    this.github_mesh.rotation.x = -0.01;
+    this.root.add(this.github_mesh);
 
+
+    this.github_text = this.create2dText("https://github.com/wirepair", 32, 700, 200, 'center', 'white', 'Verdana');
+    this.github_text.position.set(-67, 220, -45);
+    this.root.add(this.github_text);
+
+    // WIKI
+    var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.wiki_texture, transparent: true, opacity: 0}); //
+    this.materials.push(material);
+    var geometry = new THREE.SphereGeometry(30,30,30);
+    this.wiki_mesh = new THREE.Mesh(geometry, material);
+    this.wiki_mesh.position.set(-250,150,5);
+    //this.twitter_mesh.rotation.y =  Math.PI*1.68;
+    this.wiki_mesh.rotation.x = -0.01;
+    this.root.add(this.wiki_mesh);
+
+    this.wiki_text = this.create2dText("https://github.com/wirepair/PunkBusterWiki/wiki", 32, 1100, 200, 'center', 'white', 'Verdana');
+    this.wiki_text.position.set(49, 150, -45);
+    this.root.add(this.wiki_text);
+
+
+
+
+    var group = new THREE.Object3D();
+    this.thanks_text = this.create3dText("thank you", group);
+    this.thanks_text.position.set(0, 50, -55);
+    this.root.add(this.thanks_text);
+    
+    this.createFloorLighting();
+    this.floor = this.createTexturedFloor(this.floor_texture);
+    this.root.add(this.floor);    
     // Tell the framework about our object
     this.setObject3D(this.root);
     this.initFadeAnimations();
 }
+
 ThanksSlide.prototype.createLighting = function()
 {
-    var dirLight = new THREE.DirectionalLight( 0xffffff, 0.125 );
-    dirLight.position.set( 0, 0, 1 ).normalize();
-    this.root.add(dirLight);
+    var spot_light = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light.position.set(-250,350,-100);
+    spot_light.intensity = 0.5;
+    spot_light.exponent = 200;
+    this.root.add(spot_light);
 
-    var pointLight = new THREE.PointLight( 0xffffff, 1.5 );
-    pointLight.position.set( 0, 100, 90 );
-    this.root.add(pointLight);
+    //var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    //spot_light2.position.set(250,350,-100);
+    //this.root.add(spot_light2);
 
-    pointLight.color.setHSL( Math.random(), 1, 0.5 );
-    hex = decimalToHex( pointLight.color.getHex() );
 
+    // point it to the ground.
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,0,5);
+    spot_light.target = lightTarget;
+    //spot_light2.target = lightTarget;
+
+    // left and right lights
+    var spot_light3 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light3.position.set(100,0,5);
+    this.root.add(spot_light3);
+    var spot_light4 = ObjectEffects.prototype.createSpotlight(0xffffff);
+    spot_light4.position.set(-150,0,5);
+    this.root.add(spot_light4);
+
+    var lightTarget = new THREE.Object3D();
+    lightTarget.position.set(0,150,5);
+    spot_light3.target = lightTarget;
+    spot_light4.target = lightTarget;
 }
+
 ThanksSlide.prototype.loadResources = function()
 {
+    this.floor_texture = new THREE.ImageUtils.loadTexture("resources/checkerboard.jpg");
+    this.twitter_texture = new THREE.ImageUtils.loadTexture("resources/twitter.png");
+    this.details_texture = new THREE.ImageUtils.loadTexture("resources/my_details.png");
+    this.github_texture = new THREE.ImageUtils.loadTexture("resources/GitHub-Mark.png");
+    this.wiki_texture = new THREE.ImageUtils.loadTexture("resources/wiki.png");
+}
+ThanksSlide.prototype.update = function()
+{
+    Sim.Object.prototype.update.call(this);
+    this.twitter_mesh.rotation.y += 0.01;
+    this.twitter_mesh.rotation.z += 0.01;
 
+    this.github_mesh.rotation.y += 0.01;
+    this.github_mesh.rotation.z += 0.01;
+    
+    this.wiki_mesh.rotation.y += 0.01;
+    this.wiki_mesh.rotation.z += 0.01;
+
+    this.thanks_text.rotation.y += 0.01;
 }
 
-//slides.push(new IntroSlide());
-//slides.push(new MyBioSlide());
-//slides.push(new PBGamesSlide());
-//slides.push(new PunkBusterServicesSlide());
-//slides.push(new PnkBstrASlide());
-//slides.push(new FnkBstrASlide());
-//slides.push(new PnkBstrBSlide());
-//slides.push(new DeobfuscateSlide());
-//slides.push(new AntiRESlide());
-//slides.push(new DecryptionSlide());
-//slides.push(new PbclHookingSlide());
-//slides.push(new ObfuscatedCodeSlide());
-//slides.push(new PreceptionSlide());
-//slides.push(new NinkoSlide());
-//slides.push(new UDPDPSlide());
-//slides.push(new FakeClientSlide());
-//slides.push(new PbclDetailsSlide());
-//slides.push(new TODOSlide());
-//slides.push(new WikiSlide());
+slides.push(new IntroSlide());
+slides.push(new MyBioSlide());
+slides.push(new PBGamesSlide());
+slides.push(new PunkBusterServicesSlide());
+slides.push(new PnkBstrASlide());
+slides.push(new FnkBstrASlide());
+slides.push(new PnkBstrBSlide());
+slides.push(new DeobfuscateSlide());
+slides.push(new AntiRESlide());
+slides.push(new DecryptionSlide());
+slides.push(new PbclHookingSlide());
+slides.push(new ObfuscatedCodeSlide());
+slides.push(new PreceptionSlide());
+slides.push(new NinkoSlide());
+slides.push(new UDPDPSlide());
+slides.push(new FakeClientSlide());
+slides.push(new PbclDetailsSlide());
+slides.push(new TODOSlide());
 slides.push(new ThanksSlide());

@@ -250,7 +250,7 @@ SimpleSlide.prototype.create3dText = function(the_text, group)
         new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } ), // front
         new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.SmoothShading } ) // side
     ] );
-    var text = "three.js",
+    var text = the_text,
         height = 20,
         size = 70,
         hover = 30,
@@ -262,100 +262,44 @@ SimpleSlide.prototype.create3dText = function(the_text, group)
         bevelSegments = 3,
         bevelEnabled = true,
 
-        font = "optimer", // helvetiker, optimer, gentilis, droid sans, droid serif
+        font = "helvetiker", // helvetiker, optimer, gentilis, droid sans, droid serif
         weight = "bold", // normal bold
-        style = "normal"; // normal italic
+        style = "regular"; // normal italic
 
-    textGeo = new THREE.TextGeometry( text, {
+        /*
+    var textGeo = new THREE.TextGeometry( 'Leg', {
+        //font: "helvetiker", // helvetiker, optimer, gentilis, droid sans, droid serif
+        //weight: "bold", // normal bold
+        //style: "regular", // normal italic
 
-        size: size,
-        height: height,
-        curveSegments: curveSegments,
-
-        font: font,
-        weight: weight,
-        style: style,
-
-        bevelThickness: bevelThickness,
-        bevelSize: bevelSize,
-        bevelEnabled: bevelEnabled,
-
-        material: 0,
-        extrudeMaterial: 1
+        size: 40,
+        curveSegments: 1,
+        height:20,
+        bevelEnabled: true,
+        bevelSize: 3, 
+        bevelThickness: 5, 
+        bevelSegments: 2
+    });*/
+    var textGeo = new THREE.TextGeometry("Thank You!", 
+        {font: 'helvetiker', 
+        size: 40,
+        height: 15,
+        curveSegments: 4,
+        bevelThickness: 1,
+        bevelSize: 0.5,
+        bevelEnabled: true,
 
     });
-
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
-
-    // "fix" side normals by removing z-component of normals for side faces
-    // (this doesn't work well for beveled geometry as then we lose nice curvature around z-axis)
-
-    if ( ! bevelEnabled ) {
-
-        var triangleAreaHeuristics = 0.1 * ( height * size );
-
-        for ( var i = 0; i < textGeo.faces.length; i ++ ) {
-
-            var face = textGeo.faces[ i ];
-
-            if ( face.materialIndex == 1 ) {
-
-                for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
-
-                    face.vertexNormals[ j ].z = 0;
-                    face.vertexNormals[ j ].normalize();
-
-                }
-
-                var va = textGeo.vertices[ face.a ];
-                var vb = textGeo.vertices[ face.b ];
-                var vc = textGeo.vertices[ face.c ];
-
-                var s = THREE.GeometryUtils.triangleArea( va, vb, vc );
-
-                if ( s > triangleAreaHeuristics ) {
-
-                    for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
-
-                        face.vertexNormals[ j ].copy( face.normal );
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-    var centerOffset = -0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
-
-    textMesh1 = new THREE.Mesh( textGeo, material );
-
-    textMesh1.position.x = centerOffset;
-    textMesh1.position.y = hover;
-    textMesh1.position.z = 0;
-
-    textMesh1.rotation.x = 0;
-    textMesh1.rotation.y = Math.PI * 2;
-
-    group.add( textMesh1 );
-
-    if ( mirror ) {
-
-        textMesh2 = new THREE.Mesh( textGeo, material );
-
-        textMesh2.position.x = centerOffset;
-        textMesh2.position.y = -hover;
-        textMesh2.position.z = height;
-
-        textMesh2.rotation.x = Math.PI;
-        textMesh2.rotation.y = Math.PI * 2;
-
-        group.add( textMesh2 );
-    }
+    THREE.GeometryUtils.center( textGeo );
+    var greenMaterial = new THREE.MeshLambertMaterial( { color: 0x5882FF } );
+    var text = new THREE.Mesh( textGeo, greenMaterial );
+    //var centerOffset = -0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
+    //text.position.x = 0;//centerOffset;
+    //text.position.y = hover;
+    //text.position.z = 0;
+    return text;
 
 }
 /*
