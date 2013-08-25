@@ -245,41 +245,6 @@ SimpleSlide.prototype.done = function()
 
 SimpleSlide.prototype.create3dText = function(the_text, group)
 {
-    var mirror = mirror || false;
-    var material = new THREE.MeshFaceMaterial( [ 
-        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } ), // front
-        new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.SmoothShading } ) // side
-    ] );
-    var text = the_text,
-        height = 20,
-        size = 70,
-        hover = 30,
-
-        curveSegments = 4,
-
-        bevelThickness = 2,
-        bevelSize = 1.5,
-        bevelSegments = 3,
-        bevelEnabled = true,
-
-        font = "helvetiker", // helvetiker, optimer, gentilis, droid sans, droid serif
-        weight = "bold", // normal bold
-        style = "regular"; // normal italic
-
-        /*
-    var textGeo = new THREE.TextGeometry( 'Leg', {
-        //font: "helvetiker", // helvetiker, optimer, gentilis, droid sans, droid serif
-        //weight: "bold", // normal bold
-        //style: "regular", // normal italic
-
-        size: 40,
-        curveSegments: 1,
-        height:20,
-        bevelEnabled: true,
-        bevelSize: 3, 
-        bevelThickness: 5, 
-        bevelSegments: 2
-    });*/
     var textGeo = new THREE.TextGeometry("Thank You!", 
         {font: 'helvetiker', 
         size: 40,
@@ -293,12 +258,9 @@ SimpleSlide.prototype.create3dText = function(the_text, group)
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
     THREE.GeometryUtils.center( textGeo );
-    var greenMaterial = new THREE.MeshLambertMaterial( { color: 0x5882FF } );
-    var text = new THREE.Mesh( textGeo, greenMaterial );
-    //var centerOffset = -0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
-    //text.position.x = 0;//centerOffset;
-    //text.position.y = hover;
-    //text.position.z = 0;
+    var material = new THREE.MeshLambertMaterial( { color: 0x5882FF } );
+    this.materials.push(material);
+    var text = new THREE.Mesh( textGeo, material );
     return text;
 
 }
@@ -511,6 +473,52 @@ SimpleSlide.prototype.moveMeshDown = function(mesh)
     });
     return down;
 }
+
+SimpleSlide.prototype.moveMeshDownIn = function(mesh)
+{
+    var down = new Sim.KeyFrameAnimator;
+    down.name = "moveDownAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: m.x, y: 2000, z: m.z}, 
+        { x: m.x, y: 1000, z: m.z},
+        { x: m.x, y: 140, z: m.z}
+    ];
+    
+    var interps = [{keys: keys, values: position_values, target: mesh.position}];
+    down.init({
+        interps: interps,
+        loop: false,
+        duration: 250
+    });
+    return down;
+}
+
+SimpleSlide.prototype.moveMeshDownOut = function(mesh)
+{
+    var down = new Sim.KeyFrameAnimator;
+    down.name = "moveDownAnimation";
+    var m = mesh.position;
+    var mr = mesh.rotation;
+    var keys = [0, .25, 1];
+    var position_values = [
+        { x: m.x, y: 140, z: m.z}, 
+        { x: m.x, y: -1000, z: m.z},
+        { x: m.x, y: -1850, z: m.z}
+    ];
+    
+    var interps = [{keys: keys, values: position_values, target: mesh.position}];
+    down.init({
+        interps: interps,
+        loop: false,
+        duration: 250
+    });
+    return down;
+}
+
+
 
 SimpleSlide.prototype.moveMeshSide = function(mesh, z, rotate)
 {

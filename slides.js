@@ -960,10 +960,12 @@ DeobfuscateSlide.prototype.init = function(App)
     this.imageContext = this.image.getContext( '2d' );
     this.imageContext.fillStyle = '#000000';
     this.imageContext.fillRect( 0, 0, 960, 940 );
+    this.imageContext.drawImage( this.video, 0, 0 );
 
     this.video_texture = new THREE.Texture( this.image );
     this.video_texture.minFilter = THREE.LinearFilter;
     this.video_texture.magFilter = THREE.LinearFilter;
+    this.video_texture.needsUpdate = true;
 
     this.material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true } );
     
@@ -1739,7 +1741,7 @@ PreceptionSlide.prototype.initAnimations = function()
 }
 PreceptionSlide.prototype.look = function(x, y, z)
 {
-    var duration = 250;
+    var duration = 1500;
     var tweenjs = new Sim.TweenjsAnimator;
     tweenjs.name = "look " + x + " " + y + " " + z;
     var tween = new TWEEN.Tween( this.point_marker.position )
@@ -1752,7 +1754,7 @@ PreceptionSlide.prototype.look = function(x, y, z)
 
 PreceptionSlide.prototype.move = function(x, y, z)
 {
-    var duration = 250;
+    var duration = 1500;
     var tweenjs = new Sim.TweenjsAnimator;
     tweenjs.name = "look " + x + " " + y + " " + z;
     var tween = new TWEEN.Tween( this.app.camera.position )
@@ -1969,13 +1971,27 @@ UDPDPSlide.prototype.init = function(App)
     this.floor.position.set(0,-200,-200); // move floor a bit back.
     this.root.add(this.floor);
    
+    var geometry = new THREE.PlaneGeometry(1600, 1100);
+    this.reg_material = new THREE.MeshBasicMaterial({map: this.reg_texture, transparent: true, opacity: 0});
+    this.reg_mesh = new THREE.Mesh(geometry, this.reg_material);
+
+    this.reg_mesh.position.y = 140;
+    this.reg_mesh.position.z = 300;
+    this.materials.push(this.reg_material);
+    this.root.add(this.reg_mesh);
+
+    this.buildClock();
+
+
+
+
+
     var geometry = new THREE.PlaneGeometry(1600, 1100, 1);
     this.udpdp_material = new THREE.MeshBasicMaterial({map: this.udpdp_texture, transparent: true, opacity: 0});
     this.udpdp_mesh = new THREE.Mesh( geometry, this.udpdp_material);
     this.udpdp_mesh.position.y = 140;
-    this.udpdp_mesh.rotation.y = 0;
     this.udpdp_mesh.position.z = 260;
-    this.materials.push(this.udpdp_material);
+    //this.materials.push(this.udpdp_material);
     this.root.add(this.udpdp_mesh);
 
     this.image = document.createElement( 'canvas' );
@@ -1985,10 +2001,12 @@ UDPDPSlide.prototype.init = function(App)
     this.imageContext = this.image.getContext( '2d' );
     this.imageContext.fillStyle = '#000000';
     this.imageContext.fillRect( 0, 0, 1600, 1200 );
+    this.imageContext.drawImage( this.video, 0, 0 );
 
     this.video_texture = new THREE.Texture( this.image );
     this.video_texture.minFilter = THREE.LinearFilter;
     this.video_texture.magFilter = THREE.LinearFilter;
+    this.video_texture.needsUpdate = true;
 
     this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 1 } );
     
@@ -2006,11 +2024,41 @@ UDPDPSlide.prototype.init = function(App)
     this.initAnimations();
 
 }
+UDPDPSlide.prototype.buildClock = function()
+{
+    // CLOCK
 
+    this.clock_material = new THREE.LineBasicMaterial({color: 0x000000, transparent: true, opacity: 0});
+    this.materials.push(this.clock_material);
+    var circle = new THREE.Mesh( new THREE.CircleGeometry( 200, 100 ), this.clock_material );
+    circle.position.set( 0, 150, 305 );
+    this.root.add(circle);
+
+    // apparently there is a problem with lineWidth in WINDOWS. So uh, I use planes :/.
+    this.hand_holder = new THREE.Object3D();
+    this.hand_holder.position.set(0, 150, 306);
+
+    this.hand_material = new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0});
+    this.materials.push(this.hand_material);
+    var geometry = new THREE.PlaneGeometry(150, 10, 1);
+    this.hand = new THREE.Mesh(geometry, this.hand_material);
+    this.hand.position.set(75, 0, 306);
+    this.hand_holder.add(this.hand);
+    this.root.add(this.hand_holder);
+
+    // hour hand
+    var geometry = new THREE.PlaneGeometry(190, 12, 1);
+    this.hand2 = new THREE.Mesh(geometry, this.hand_material);
+    this.hand2.position.set(92, 150, 306);
+    this.root.add(this.hand2);
+
+}
 UDPDPSlide.prototype.loadResources = function()
 {
+    this.reg_texture = THREE.ImageUtils.loadTexture("resources/pnkbstrb_reg.png");
     this.video = document.getElementById('udpdp_video');
     this.udpdp_texture = THREE.ImageUtils.loadTexture("resources/udpdp_usage.png");
+
 }
 UDPDPSlide.prototype.initAnimations = function()
 {
@@ -2023,6 +2071,35 @@ UDPDPSlide.prototype.initAnimations = function()
     this.addChild(animatorIn); 
     animatorIn.name = "animatorIn";
     this.animations.push(animatorIn);
+
+    // CLOCK & Image fade out
+    var clock_group = new Sim.AnimationGroup;
+    var fadeClockandImage = new Sim.KeyFrameAnimator;
+    fadeClockandImage.name = "FadeOutClock";
+    fadeClockandImage.init({
+        interps: ObjectEffects.prototype.fadeOut([this.reg_material, this.hand_material, this.clock_material]),
+        duration: 500,
+        loop: false
+    });
+    this.addChild(fadeClockandImage);
+    clock_group.add(fadeClockandImage);
+
+    var fadeInUDPDP = new Sim.KeyFrameAnimator;
+    fadeInUDPDP.name = "Fade In UDPDP";
+    fadeInUDPDP.init({
+        interps: ObjectEffects.prototype.fadeIn(this.udpdp_material),
+        duration: 500,
+        loop: false
+    });
+    this.addChild(fadeInUDPDP);
+    clock_group.add(fadeInUDPDP);
+
+    clock_group.init({isChain:true});
+    this.addChild(clock_group);
+    this.animations.push(clock_group);
+
+
+
 
     // GROUP
     var group = new Sim.AnimationGroup;
@@ -2049,7 +2126,7 @@ UDPDPSlide.prototype.initAnimations = function()
 
     var animatorOut = new Sim.KeyFrameAnimator;
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        interps: ObjectEffects.prototype.moveFloorOut(this.materials),
         loop: false,
         duration: 500
     });    
@@ -2058,7 +2135,14 @@ UDPDPSlide.prototype.initAnimations = function()
     animatorOut.name = "animatorOut";
     this.animations.push(animatorOut);
 }
-    
+UDPDPSlide.prototype.update = function()
+{
+    Sim.Object.prototype.update.call(this);
+    if (this.hand_material.opacity != 0)
+    {
+        this.hand_holder.rotation.z -= 0.001;
+    }
+}
 
 /*****************************************************************************/
 /* Fake Client Video Slide                                                   */
@@ -2199,49 +2283,7 @@ FakeClientSlide.prototype.initAnimations = function()
     this.animations.push(animatorOut);
 }
 
-FakeClientSlide.prototype.moveMeshDownIn = function(mesh)
-{
-    var down = new Sim.KeyFrameAnimator;
-    down.name = "moveDownAnimation";
-    var m = mesh.position;
-    var mr = mesh.rotation;
-    var keys = [0, .25, 1];
-    var position_values = [
-        { x: m.x, y: 2000, z: m.z}, 
-        { x: m.x, y: 1000, z: m.z},
-        { x: m.x, y: 140, z: m.z}
-    ];
-    
-    var interps = [{keys: keys, values: position_values, target: mesh.position}];
-    down.init({
-        interps: interps,
-        loop: false,
-        duration: 250
-    });
-    return down;
-}
 
-FakeClientSlide.prototype.moveMeshDownOut = function(mesh)
-{
-    var down = new Sim.KeyFrameAnimator;
-    down.name = "moveDownAnimation";
-    var m = mesh.position;
-    var mr = mesh.rotation;
-    var keys = [0, .25, 1];
-    var position_values = [
-        { x: m.x, y: 140, z: m.z}, 
-        { x: m.x, y: -1000, z: m.z},
-        { x: m.x, y: -1850, z: m.z}
-    ];
-    
-    var interps = [{keys: keys, values: position_values, target: mesh.position}];
-    down.init({
-        interps: interps,
-        loop: false,
-        duration: 250
-    });
-    return down;
-}
 
 /*****************************************************************************/
 /* pbcl details Slide                                                        */
@@ -2250,6 +2292,7 @@ PbclDetailsSlide = function()
 {
     this.name = "PbclDetailsSlide";
     SimpleSlide.call(this);
+
 }
 
 PbclDetailsSlide.prototype = new SimpleSlide();
@@ -2257,17 +2300,154 @@ PbclDetailsSlide.prototype = new SimpleSlide();
 PbclDetailsSlide.prototype.init = function(App)
 {
     SimpleSlide.prototype.init.call(this, App);
+    this.camera_pos.x = 0;
+    this.camera_pos.y = 150;
+    this.camera_pos.z = 1800;
+
+    this.floor = this.createDottedFloor();
+    this.floor.position.set(0,-200,-200); // move floor a bit back.
+    this.root.add(this.floor);
+    // xor table function
+    var geometry = new THREE.PlaneGeometry(720,650);
+    var material = new THREE.MeshBasicMaterial({map: this.xor_func_texture, transparent: true, opacity: 0});
+    this.materials.push(material);
+    this.xor_func_mesh = new THREE.Mesh(geometry, material);
+    this.xor_func_mesh.position.y = 150;
+    this.xor_func_mesh.position.z = 900;
+    this.root.add(this.xor_func_mesh);
+
+    // how xor fptr table works
+    var geometry = new THREE.PlaneGeometry(600,200);
+    var material = new THREE.MeshBasicMaterial({map: this.example_fptr_texture, transparent: true, opacity: 0});
+    this.materials.push(material);
+    this.example_fptr_mesh = new THREE.Mesh(geometry, material);
+    this.example_fptr_mesh.position.y = 2000;
+    this.example_fptr_mesh.position.z = 1250;
+    this.root.add(this.example_fptr_mesh);
+
+    // VIDEO
+    this.image = document.createElement( 'canvas' );
+    this.image.width = 1264;
+    this.image.height = 916;
+
+    this.imageContext = this.image.getContext( '2d' );
+    this.imageContext.fillStyle = '#000000';
+    this.imageContext.fillRect( 0, 0, 1264, 916 );
+    this.imageContext.drawImage( this.video, 0, 0 );
+
+    this.video_texture = new THREE.Texture( this.image );
+    this.video_texture.minFilter = THREE.LinearFilter;
+    this.video_texture.magFilter = THREE.LinearFilter;
+    this.video_texture.needsUpdate = true;
+
+    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 1 } );
+    
+    var plane = new THREE.PlaneGeometry( 1264, 916, 4, 4 );
+
+    this.video_mesh = new THREE.Mesh( plane, this.video_material );
+    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
+    this.video_mesh.position.y = 2000;
+    this.video_mesh.rotation.y = 0;
+    this.video_mesh.position.z = 650;
+    this.root.add(this.video_mesh);
+    
+    // hook check
+    var geometry = new THREE.PlaneGeometry(800,850);
+    var material = new THREE.MeshBasicMaterial({map: this.hook_texture, transparent: true, opacity: 0});
+    this.materials.push(material);
+    this.hook_mesh = new THREE.Mesh(geometry, material);
+    this.hook_mesh.position.y = 2000;
+    this.hook_mesh.position.z = 650;
+    this.root.add(this.hook_mesh);
+
 
     // Tell the framework about our object
     this.setObject3D(this.root);
-    this.initFadeAnimations();
+    this.initAnimations();
 }
 
 PbclDetailsSlide.prototype.loadResources = function()
 {
-
+    this.xor_func_texture = THREE.ImageUtils.loadTexture("resources/pbcl_xor_table.png");
+    this.example_fptr_texture = THREE.ImageUtils.loadTexture("resources/example_xor_fptr_table.png");
+    this.hook_texture = THREE.ImageUtils.loadTexture("resources/pb_hook.png");
+    this.video = document.getElementById("pbcl_fptr_video");
 }
 
+PbclDetailsSlide.prototype.initAnimations = function()
+{
+    var animatorIn = new Sim.KeyFrameAnimator;
+    animatorIn.init({ 
+        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        loop: false,
+        duration: 500
+    });
+    this.addChild(animatorIn); 
+    animatorIn.name = "animatorIn";
+    this.animations.push(animatorIn);
+
+    
+    // group 1 (images)
+    var mesh_group1 = new Sim.AnimationGroup;
+    var moveOut = this.moveMeshDownOut(this.xor_func_mesh);
+    mesh_group1.add(moveOut);
+    this.addChild(moveOut);
+
+    var moveIn = this.moveMeshDown(this.example_fptr_mesh);
+    mesh_group1.add(moveIn);
+    this.addChild(moveIn);
+
+    mesh_group1.init();
+    this.addChild(mesh_group1);
+    this.animations.push(mesh_group1);
+
+    // group 2 (video)
+    var mesh_group2 = new Sim.AnimationGroup;
+
+    var moveOut = this.moveMeshDownOut(this.example_fptr_mesh);
+    this.addChild(moveOut);
+    mesh_group2.add(moveOut);
+
+    var moveIn = this.moveMeshDown(this.video_mesh);
+    this.addChild(moveIn);
+    mesh_group2.add(moveIn);
+    mesh_group2.init();
+    this.addChild(mesh_group2);
+    this.animations.push(mesh_group2);
+
+
+    // video animation
+    var videoAnimator = new Sim.VideoAnimator;
+    videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
+    this.addChild(videoAnimator);
+    this.animations.push(videoAnimator);
+
+    
+    // group 3 ( more images )
+    var mesh_group3 = new Sim.AnimationGroup;
+    
+    var moveOut = this.moveMeshDownOut(this.video_mesh);
+    this.addChild(moveOut);
+    mesh_group3.add(moveOut);
+
+    var moveIn = this.moveMeshDown(this.hook_mesh);
+    this.addChild(moveIn);
+    mesh_group3.add(moveIn);
+    this.addChild(mesh_group3);
+    mesh_group3.init();
+    this.animations.push(mesh_group3);
+
+    var animatorOut = new Sim.KeyFrameAnimator;
+    animatorOut.init({ 
+        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        loop: false,
+        duration: 500
+    });    
+
+    this.addChild(animatorOut);
+    animatorOut.name = "animatorOut";
+    this.animations.push(animatorOut);
+}
 
 /*****************************************************************************/
 /* TODO Slide                                                                */
@@ -2398,9 +2578,6 @@ ThanksSlide.prototype.init = function(App)
     this.wiki_text = this.create2dText("https://github.com/wirepair/PunkBusterWiki/wiki", 32, 1100, 200, 'center', 'white', 'Verdana');
     this.wiki_text.position.set(49, 150, -45);
     this.root.add(this.wiki_text);
-
-
-
 
     var group = new THREE.Object3D();
     this.thanks_text = this.create3dText("thank you", group);
