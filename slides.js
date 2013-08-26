@@ -1967,10 +1967,6 @@ UDPDPSlide.prototype.init = function(App)
     this.camera_pos.y = 150;
     this.camera_pos.z = 1800;
 
-    this.floor = this.createDottedFloor();
-    this.floor.position.set(0,-200,-200); // move floor a bit back.
-    this.root.add(this.floor);
-   
     var geometry = new THREE.PlaneGeometry(1600, 1100);
     this.reg_material = new THREE.MeshBasicMaterial({map: this.reg_texture, transparent: true, opacity: 0});
     this.reg_mesh = new THREE.Mesh(geometry, this.reg_material);
@@ -1995,6 +1991,34 @@ UDPDPSlide.prototype.init = function(App)
     this.root.add(this.udpdp_mesh);
 
     this.image = document.createElement( 'canvas' );
+    this.image.width = 960;
+    this.image.height = 540;
+
+    this.imageContext = this.image.getContext( '2d' );
+    this.imageContext.fillStyle = '#000000';
+    this.imageContext.fillRect( 0, 0, 960, 540 );
+    this.imageContext.drawImage( this.video, 0, 0 );
+
+    this.video_texture = new THREE.Texture( this.image );
+    this.video_texture.minFilter = THREE.LinearFilter;
+    this.video_texture.magFilter =  THREE.LinearFilter;
+    this.video_texture.needsUpdate = true;
+
+    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 0 } );
+    this.materials.push(this.video_material);
+    var plane = new THREE.PlaneGeometry( 960, 540, 4, 4);
+
+    this.video_mesh = new THREE.Mesh( plane, this.video_material );
+    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 2.5;
+    this.video_mesh.position.y = 140;
+    this.video_mesh.rotation.y = 0;
+    this.video_mesh.position.z = 5;
+    this.root.add(this.video_mesh);
+
+
+    // VIDEO
+    /*
+    this.image = document.createElement( 'canvas' );
     this.image.width = 1600;
     this.image.height = 1200;
 
@@ -2004,13 +2028,13 @@ UDPDPSlide.prototype.init = function(App)
     this.imageContext.drawImage( this.video, 0, 0 );
 
     this.video_texture = new THREE.Texture( this.image );
-    this.video_texture.minFilter = THREE.LinearFilter;
-    this.video_texture.magFilter = THREE.LinearFilter;
+    this.video_texture.minFilter = THREE.LinearMipMapLinearFilter; //THREE.LinearFilter;
+    this.video_texture.magFilter =  THREE.LinearFilter;
     this.video_texture.needsUpdate = true;
 
-    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 1 } );
-    
-    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4 );
+    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 0 } );
+    this.materials.push(this.video_material);
+    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4);
 
     this.video_mesh = new THREE.Mesh( plane, this.video_material );
     this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
@@ -2018,7 +2042,11 @@ UDPDPSlide.prototype.init = function(App)
     this.video_mesh.rotation.y = 0;
     this.video_mesh.position.z = 250;
     this.root.add(this.video_mesh);
-    
+    */
+    // END VIDEO
+
+
+
     // Tell the framework about our object
     this.setObject3D(this.root);
     this.initAnimations();
@@ -2535,6 +2563,14 @@ ThanksSlide.prototype.init = function(App)
     this.camera_pos.y = 150;
     this.camera_pos.z = 500;
 
+    // Veracode
+    var material = new THREE.MeshBasicMaterial( {map: this.veracode_texture, transparent: true, opacity: 0});
+    this.materials.push(material);
+    var geometry = new THREE.PlaneGeometry(175, 35);
+    this.veracode_mesh = new THREE.Mesh(geometry, material);
+    this.veracode_mesh.position.set(200, 320, 5); // y = 120
+    this.root.add(this.veracode_mesh);
+
     // Twitter
     var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.twitter_texture, transparent: true, opacity: 0}); //
     this.materials.push(material);
@@ -2547,7 +2583,7 @@ ThanksSlide.prototype.init = function(App)
 
 
     this.twitter_text = this.create2dText("@_wirepair", 32, 300, 200, 'center', 'white', 'Verdana');
-    this.twitter_text.position.set(-160, 300, -45);
+    this.twitter_text.position.set(-160, 290, -45);
     this.root.add(this.twitter_text);
 
     // GITHUB
@@ -2600,11 +2636,6 @@ ThanksSlide.prototype.createLighting = function()
     spot_light.exponent = 200;
     this.root.add(spot_light);
 
-    //var spot_light2 = ObjectEffects.prototype.createSpotlight(0xffffff);
-    //spot_light2.position.set(250,350,-100);
-    //this.root.add(spot_light2);
-
-
     // point it to the ground.
     var lightTarget = new THREE.Object3D();
     lightTarget.position.set(0,0,5);
@@ -2632,6 +2663,7 @@ ThanksSlide.prototype.loadResources = function()
     this.details_texture = new THREE.ImageUtils.loadTexture("resources/my_details.png");
     this.github_texture = new THREE.ImageUtils.loadTexture("resources/GitHub-Mark.png");
     this.wiki_texture = new THREE.ImageUtils.loadTexture("resources/wiki.png");
+    this.veracode_texture = new THREE.ImageUtils.loadTexture("resources/veracode_logo.png");
 }
 ThanksSlide.prototype.update = function()
 {
@@ -2648,22 +2680,22 @@ ThanksSlide.prototype.update = function()
     this.thanks_text.rotation.y += 0.01;
 }
 
-slides.push(new IntroSlide());
-slides.push(new MyBioSlide());
-slides.push(new PBGamesSlide());
-slides.push(new PunkBusterServicesSlide());
-slides.push(new PnkBstrASlide());
-slides.push(new FnkBstrASlide());
-slides.push(new PnkBstrBSlide());
-slides.push(new DeobfuscateSlide());
-slides.push(new AntiRESlide());
-slides.push(new DecryptionSlide());
-slides.push(new PbclHookingSlide());
-slides.push(new ObfuscatedCodeSlide());
-slides.push(new PreceptionSlide());
-slides.push(new NinkoSlide());
-slides.push(new UDPDPSlide());
-slides.push(new FakeClientSlide());
-slides.push(new PbclDetailsSlide());
-slides.push(new TODOSlide());
-slides.push(new ThanksSlide());
+slides.push(new IntroSlide());                  // 1
+slides.push(new MyBioSlide());                  // 2
+slides.push(new PBGamesSlide());                // 3
+slides.push(new PunkBusterServicesSlide());     // 4
+slides.push(new PnkBstrASlide());               // 5
+slides.push(new FnkBstrASlide());               // 6
+slides.push(new PnkBstrBSlide());               // 7
+slides.push(new DeobfuscateSlide());            // 8
+slides.push(new AntiRESlide());                 // 9
+slides.push(new DecryptionSlide());             // 10
+slides.push(new PbclHookingSlide());            // 11
+slides.push(new ObfuscatedCodeSlide());         // 12
+slides.push(new PreceptionSlide());             // 13
+slides.push(new NinkoSlide());                  // 14
+slides.push(new UDPDPSlide());                  // 15
+slides.push(new FakeClientSlide());             // 16
+slides.push(new PbclDetailsSlide());            // 17
+slides.push(new TODOSlide());                   // 18
+slides.push(new ThanksSlide());                 // 19
