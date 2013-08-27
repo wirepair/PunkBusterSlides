@@ -1800,7 +1800,7 @@ NinkoSlide.prototype.init = function(App)
     
     var fox_geometry = new THREE.PlaneGeometry(100, 200);
     
-    this.fox_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fox_texture } );
+    this.fox_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fox_texture, transparent: true, opacity: 1 } );
     this.fox_mesh = new THREE.Mesh( fox_geometry, this.fox_material ); 
     this.materials.push(this.fox_material);
     this.foxes = []
@@ -1844,6 +1844,7 @@ NinkoSlide.prototype.createNinkoText = function()
     this.ninko_texture.repeat.y = 0.2;
 
     this.ninko_material = new THREE.MeshBasicMaterial( { map: this.ninko_texture, transparent: true, opacity: 1});
+    this.materials.push(this.ninko_material);
     var mesh = new THREE.Mesh( geometry, this.ninko_material ); 
     mesh.position.y = -2000;
     return mesh;
@@ -2005,7 +2006,7 @@ UDPDPSlide.prototype.init = function(App)
     this.video_texture.needsUpdate = true;
 
     this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 0 } );
-    this.materials.push(this.video_material);
+    //this.materials.push(this.video_material);
     var plane = new THREE.PlaneGeometry( 960, 540, 4, 4);
 
     this.video_mesh = new THREE.Mesh( plane, this.video_material );
@@ -2014,38 +2015,6 @@ UDPDPSlide.prototype.init = function(App)
     this.video_mesh.rotation.y = 0;
     this.video_mesh.position.z = 5;
     this.root.add(this.video_mesh);
-
-
-    // VIDEO
-    /*
-    this.image = document.createElement( 'canvas' );
-    this.image.width = 1600;
-    this.image.height = 1200;
-
-    this.imageContext = this.image.getContext( '2d' );
-    this.imageContext.fillStyle = '#000000';
-    this.imageContext.fillRect( 0, 0, 1600, 1200 );
-    this.imageContext.drawImage( this.video, 0, 0 );
-
-    this.video_texture = new THREE.Texture( this.image );
-    this.video_texture.minFilter = THREE.LinearMipMapLinearFilter; //THREE.LinearFilter;
-    this.video_texture.magFilter =  THREE.LinearFilter;
-    this.video_texture.needsUpdate = true;
-
-    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 0 } );
-    this.materials.push(this.video_material);
-    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4);
-
-    this.video_mesh = new THREE.Mesh( plane, this.video_material );
-    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
-    this.video_mesh.position.y = 140;
-    this.video_mesh.rotation.y = 0;
-    this.video_mesh.position.z = 250;
-    this.root.add(this.video_mesh);
-    */
-    // END VIDEO
-
-
 
     // Tell the framework about our object
     this.setObject3D(this.root);
@@ -2141,6 +2110,16 @@ UDPDPSlide.prototype.initAnimations = function()
     });
     this.addChild(fadeOut);
     group.add(fadeOut);
+
+    var fadeInVideo = new Sim.KeyFrameAnimator;
+    fadeInVideo.name = "FadeInVideo";
+    fadeInVideo.init({
+        interps: ObjectEffects.prototype.fadeIn(this.video_material),
+        duration: 250,
+        loop: false
+    });
+    this.addChild(fadeInVideo);
+    group.add(fadeInVideo);
 
     var videoAnimator = new Sim.VideoAnimator;
     videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
