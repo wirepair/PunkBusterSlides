@@ -2550,6 +2550,14 @@ ThanksSlide.prototype.init = function(App)
     this.veracode_mesh.position.set(200, 320, 5); // y = 120
     this.root.add(this.veracode_mesh);
 
+    // fourtyfourcon
+    var material = new THREE.MeshBasicMaterial( {map: this.fourtyfourcon_texture, transparent: true, opacity: 0});
+    this.materials.push(material);
+    var geometry = new THREE.PlaneGeometry(175, 70);
+    this.fourtyfourcon_mesh = new THREE.Mesh(geometry, material);
+    this.fourtyfourcon_mesh.position.set(200, 260, 5);
+    this.root.add(this.fourtyfourcon_mesh);
+
     // Twitter
     var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.twitter_texture, transparent: true, opacity: 0}); //
     this.materials.push(material);
@@ -2643,6 +2651,7 @@ ThanksSlide.prototype.loadResources = function()
     this.github_texture = new THREE.ImageUtils.loadTexture("resources/GitHub-Mark.png");
     this.wiki_texture = new THREE.ImageUtils.loadTexture("resources/wiki.png");
     this.veracode_texture = new THREE.ImageUtils.loadTexture("resources/veracode_logo.png");
+    this.fourtyfourcon_texture = new THREE.ImageUtils.loadTexture("resources/44con.png");
 }
 ThanksSlide.prototype.update = function()
 {
