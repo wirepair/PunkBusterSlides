@@ -302,7 +302,7 @@ PunkBusterServicesSlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
-    this.camera_pos.z = 500;
+    this.camera_pos.z = 700;
  
     this.pnka_position = new THREE.Object3D();
     this.pnka_position.position.set(-250, 220, 5);
@@ -573,7 +573,7 @@ PnkBstrASlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
-    this.camera_pos.z = 450;
+    this.camera_pos.z = 650;
 
     this.floor = this.createWireframeFloor(0xff80ff);
 
@@ -863,7 +863,7 @@ PnkBstrBSlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
-    this.camera_pos.z = 450;
+    this.camera_pos.z = 650;
 
     this.floor = this.createWireframeFloor(0x81BEF7);
     this.floor.material.opacity = 0;
@@ -1800,7 +1800,7 @@ NinkoSlide.prototype.init = function(App)
     
     var fox_geometry = new THREE.PlaneGeometry(100, 200);
     
-    this.fox_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fox_texture } );
+    this.fox_material = new THREE.MeshBasicMaterial( { color: 0xffffff, map: this.fox_texture, transparent: true, opacity: 1 } );
     this.fox_mesh = new THREE.Mesh( fox_geometry, this.fox_material ); 
     this.materials.push(this.fox_material);
     this.foxes = []
@@ -1844,6 +1844,7 @@ NinkoSlide.prototype.createNinkoText = function()
     this.ninko_texture.repeat.y = 0.2;
 
     this.ninko_material = new THREE.MeshBasicMaterial( { map: this.ninko_texture, transparent: true, opacity: 1});
+    this.materials.push(this.ninko_material);
     var mesh = new THREE.Mesh( geometry, this.ninko_material ); 
     mesh.position.y = -2000;
     return mesh;
@@ -1965,7 +1966,7 @@ UDPDPSlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
-    this.camera_pos.z = 1800;
+    this.camera_pos.z = 2000;
 
     var geometry = new THREE.PlaneGeometry(1600, 1100);
     this.reg_material = new THREE.MeshBasicMaterial({map: this.reg_texture, transparent: true, opacity: 0});
@@ -2005,7 +2006,7 @@ UDPDPSlide.prototype.init = function(App)
     this.video_texture.needsUpdate = true;
 
     this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 0 } );
-    this.materials.push(this.video_material);
+    //this.materials.push(this.video_material);
     var plane = new THREE.PlaneGeometry( 960, 540, 4, 4);
 
     this.video_mesh = new THREE.Mesh( plane, this.video_material );
@@ -2014,38 +2015,6 @@ UDPDPSlide.prototype.init = function(App)
     this.video_mesh.rotation.y = 0;
     this.video_mesh.position.z = 5;
     this.root.add(this.video_mesh);
-
-
-    // VIDEO
-    /*
-    this.image = document.createElement( 'canvas' );
-    this.image.width = 1600;
-    this.image.height = 1200;
-
-    this.imageContext = this.image.getContext( '2d' );
-    this.imageContext.fillStyle = '#000000';
-    this.imageContext.fillRect( 0, 0, 1600, 1200 );
-    this.imageContext.drawImage( this.video, 0, 0 );
-
-    this.video_texture = new THREE.Texture( this.image );
-    this.video_texture.minFilter = THREE.LinearMipMapLinearFilter; //THREE.LinearFilter;
-    this.video_texture.magFilter =  THREE.LinearFilter;
-    this.video_texture.needsUpdate = true;
-
-    this.video_material = new THREE.MeshBasicMaterial( { map: this.video_texture, overdraw: true, transparent: true, opacity: 0 } );
-    this.materials.push(this.video_material);
-    var plane = new THREE.PlaneGeometry( 1600, 1200, 4, 4);
-
-    this.video_mesh = new THREE.Mesh( plane, this.video_material );
-    this.video_mesh.scale.x = this.video_mesh.scale.y = this.video_mesh.scale.z = 1.0;
-    this.video_mesh.position.y = 140;
-    this.video_mesh.rotation.y = 0;
-    this.video_mesh.position.z = 250;
-    this.root.add(this.video_mesh);
-    */
-    // END VIDEO
-
-
 
     // Tell the framework about our object
     this.setObject3D(this.root);
@@ -2141,6 +2110,16 @@ UDPDPSlide.prototype.initAnimations = function()
     });
     this.addChild(fadeOut);
     group.add(fadeOut);
+
+    var fadeInVideo = new Sim.KeyFrameAnimator;
+    fadeInVideo.name = "FadeInVideo";
+    fadeInVideo.init({
+        interps: ObjectEffects.prototype.fadeIn(this.video_material),
+        duration: 250,
+        loop: false
+    });
+    this.addChild(fadeInVideo);
+    group.add(fadeInVideo);
 
     var videoAnimator = new Sim.VideoAnimator;
     videoAnimator.init({video: this.video, video_texture: this.video_texture, image_context: this.imageContext});
@@ -2561,7 +2540,7 @@ ThanksSlide.prototype.init = function(App)
     SimpleSlide.prototype.init.call(this, App);
     this.camera_pos.x = 0;
     this.camera_pos.y = 150;
-    this.camera_pos.z = 500;
+    this.camera_pos.z = 700;
 
     // Veracode
     var material = new THREE.MeshBasicMaterial( {map: this.veracode_texture, transparent: true, opacity: 0});
@@ -2570,6 +2549,14 @@ ThanksSlide.prototype.init = function(App)
     this.veracode_mesh = new THREE.Mesh(geometry, material);
     this.veracode_mesh.position.set(200, 320, 5); // y = 120
     this.root.add(this.veracode_mesh);
+
+    // fourtyfourcon
+    var material = new THREE.MeshBasicMaterial( {map: this.fourtyfourcon_texture, transparent: true, opacity: 0});
+    this.materials.push(material);
+    var geometry = new THREE.PlaneGeometry(175, 70);
+    this.fourtyfourcon_mesh = new THREE.Mesh(geometry, material);
+    this.fourtyfourcon_mesh.position.set(200, 260, 5);
+    this.root.add(this.fourtyfourcon_mesh);
 
     // Twitter
     var material = new THREE.MeshLambertMaterial( { color: 0x888888, map: this.twitter_texture, transparent: true, opacity: 0}); //
@@ -2664,6 +2651,7 @@ ThanksSlide.prototype.loadResources = function()
     this.github_texture = new THREE.ImageUtils.loadTexture("resources/GitHub-Mark.png");
     this.wiki_texture = new THREE.ImageUtils.loadTexture("resources/wiki.png");
     this.veracode_texture = new THREE.ImageUtils.loadTexture("resources/veracode_logo.png");
+    this.fourtyfourcon_texture = new THREE.ImageUtils.loadTexture("resources/44con.png");
 }
 ThanksSlide.prototype.update = function()
 {
