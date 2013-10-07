@@ -424,7 +424,7 @@ ThreePrezSlide.prototype.initFadeAnimations = function()
 {
     var animatorIn = new ThreePrez.KeyFrameAnimator;
     animatorIn.init({ 
-        interps: ObjectEffects.prototype.fadeIn(this.materials),
+        interps: AnimationEffects.prototype.fadeIn(this.materials),
         loop: false,
         duration: 500
     });
@@ -433,7 +433,7 @@ ThreePrezSlide.prototype.initFadeAnimations = function()
     this.animations.push(animatorIn);
     var animatorOut = new ThreePrez.KeyFrameAnimator;
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.fadeOut(this.materials),
+        interps: AnimationEffects.prototype.fadeOut(this.materials),
         loop: false,
         duration: 500
     });    
@@ -597,7 +597,7 @@ ThreePrezSlide.prototype.initFloorAnimations = function()
     var animatorIn = new ThreePrez.KeyFrameAnimator;
     animatorIn.name = "floorAnimatorIn";
     animatorIn.init({ 
-        interps: ObjectEffects.prototype.moveFloorIn(this.object3D),
+        interps: AnimationEffects.prototype.moveFloorIn(this.object3D),
         loop: false,
         duration: 500
     });
@@ -606,7 +606,7 @@ ThreePrezSlide.prototype.initFloorAnimations = function()
     var animatorOut = new ThreePrez.KeyFrameAnimator;
     animatorOut.name = "floorAnimatorOut";
     animatorOut.init({ 
-        interps: ObjectEffects.prototype.moveFloorOut(this.object3D),
+        interps: AnimationEffects.prototype.moveFloorOut(this.object3D),
         loop: false,
         duration: 500
     });    
